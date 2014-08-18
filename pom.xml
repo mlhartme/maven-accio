@@ -13,7 +13,7 @@
 
   <groupId>net.oneandone.pommes</groupId>
   <artifactId>maven</artifactId>
-  <version>3.8.1-SNAPSHOT</version>
+  <version>3.8.0-SNAPSHOT</version>
   <packaging>jar</packaging>
 
   <properties>
@@ -58,9 +58,9 @@
   </developers>
 
   <scm>
-    <connection>scm:git:ssh://git@github.com/mlhartme/pommes.git</connection>
-    <developerConnection>scm:git:ssh://git@github.com/mlhartme/pommes.git</developerConnection>
-    <url>https://github.com/mlhartme/pommes/maven</url>
+    <connection>scm:git:ssh://git@github.com/mlhartme/maven-utils.git</connection>
+    <developerConnection>scm:git:ssh://git@github.com/mlhartme/maven-utils.git</developerConnection>
+    <url>https://github.com/mlhartme/maven-utils</url>
     <tag>HEAD</tag>
   </scm>
 
