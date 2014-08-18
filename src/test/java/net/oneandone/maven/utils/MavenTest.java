@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package net.oneandone.pommes.maven;
+package net.oneandone.maven.utils;
 
 import net.oneandone.sushi.fs.World;
 import net.oneandone.sushi.fs.file.FileNode;
@@ -80,7 +80,7 @@ public class MavenTest {
         MavenProject pom;
 
         pom = maven.loadPom(maven.getWorld().guessProjectHome(getClass()).join("pom.xml"));
-        assertEquals("maven", pom.getArtifactId());
+        assertEquals("utils", pom.getArtifactId());
     }
 
     @Test
