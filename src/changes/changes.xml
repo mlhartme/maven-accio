@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?><document xmlns="http://maven.apache.org/changes/1.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/changes/1.0.0 http://maven.apache.org/xsd/changes-1.0.0.xsd">
   <body>
-    <release date="2014-08-14" version="3.8.0">
+    <release date="2014-08-19" version="3.8.0">
       <action date="2014-03-26" dev="mhm" type="update">
         Moved to github. Changed coordinates to net.oneondone.maven:embedded and package accordingly.
       </action>
