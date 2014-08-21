@@ -53,6 +53,9 @@ public class MavenTest {
 
     //--
 
+    public static void main(String[] args) throws Exception {
+        System.out.println(Maven.withSettings(new World()).resolve("com.oneandone.sales.tools.maven:hello:2.0.5-SNAPSHOT").getAbsolute());
+    }
     @Test
     public void resolveRelease() throws Exception {
         maven.resolve(JAR).checkFile();
