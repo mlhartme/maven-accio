@@ -43,6 +43,7 @@ import org.apache.maven.settings.Settings;
 import org.apache.maven.settings.SettingsUtils;
 import org.codehaus.plexus.DefaultContainerConfiguration;
 import org.codehaus.plexus.DefaultPlexusContainer;
+import org.codehaus.plexus.PlexusConstants;
 import org.codehaus.plexus.PlexusContainerException;
 import org.codehaus.plexus.classworlds.ClassWorld;
 import org.codehaus.plexus.classworlds.realm.ClassRealm;
@@ -247,6 +248,7 @@ public class Maven {
             config.setRealm(realm);
         }
         config.setAutoWiring(true);
+        config.setClassPathScanning(PlexusConstants.SCANNING_INDEX);
         try {
             container = new DefaultPlexusContainer(config);
         } catch (PlexusContainerException e) {

@@ -38,10 +38,10 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 public class MavenTest {
-    private static final Artifact JAR = new DefaultArtifact("com.oneandone.devel:registry:1.0.2");
-    private static final Artifact UI = new DefaultArtifact("de.ui.webdev:pfixui:war:x");
+    private static final Artifact JAR = new DefaultArtifact("net.oneandone:sushi:2.8.16");
+    private static final Artifact WAR = new DefaultArtifact("wicket:wicket-quickstart:war:x");
     private static final Artifact NOT_FOUND = new DefaultArtifact("no.such.group:foo:x");
-    private static final Artifact CP = new DefaultArtifact("de.schlund.controlpanel:controlpanel-war-de:war:3.0.0-SNAPSHOT");
+    private static final Artifact SNAPSHOT = new DefaultArtifact("net.oneandone:sushi:3.0.0-SNAPSHOT");
 
     private World world;
     private Maven maven;
@@ -53,9 +53,6 @@ public class MavenTest {
 
     //--
 
-    public static void main(String[] args) throws Exception {
-        System.out.println(Maven.withSettings(new World()).resolve("com.oneandone.sales.tools.maven:hello:2.0.5-SNAPSHOT").getAbsolute());
-    }
     @Test
     public void resolveRelease() throws Exception {
         maven.resolve(JAR).checkFile();
@@ -63,7 +60,7 @@ public class MavenTest {
 
     @Test
     public void resolveSnapshot() throws Exception {
-        maven.resolve(CP);
+        maven.resolve(SNAPSHOT);
     }
 
     @Test(expected = ArtifactResolutionException.class)
@@ -122,9 +119,9 @@ public class MavenTest {
         FileNode file;
         MavenProject pom;
 
-        latest = maven.latestRelease(UI);
+        latest = maven.latestRelease(WAR);
         assertNotNull(latest);
-        artifact = UI.setVersion(latest);
+        artifact = WAR.setVersion(latest);
         file = maven.resolve(artifact);
         file.checkFile();
         assertTrue(file.length() > 0);
@@ -137,9 +134,9 @@ public class MavenTest {
             throws VersionResolutionException, VersionRangeResolutionException, ArtifactResolutionException, IOException {
         String version;
 
-        version = maven.latestVersion(CP);
+        version = maven.latestVersion(SNAPSHOT);
         assertTrue(version, version.startsWith("3.0.0-"));
-        maven.resolve(CP.setVersion(version)).checkFile();
+        maven.resolve(SNAPSHOT.setVersion(version)).checkFile();
     }
 
     @Test
@@ -148,10 +145,10 @@ public class MavenTest {
         String latest;
         FileNode file;
 
-        latest = maven.latestVersion(CP);
+        latest = maven.latestVersion(SNAPSHOT);
         assertNotNull(latest);
         assertTrue(latest, latest.startsWith("3.0.0-"));
-        artifact = CP.setVersion(latest);
+        artifact = SNAPSHOT.setVersion(latest);
         file = maven.resolve(artifact);
         file.checkFile();
         assertTrue(file.length() > 0);
@@ -177,32 +174,20 @@ public class MavenTest {
         String current;
         String str;
 
-        current = maven.nextVersion(UI.setVersion("0.3.95"));
-        assertTrue(current, current.startsWith("1.1"));
+        current = maven.nextVersion(WAR.setVersion("1.2.7"));
+        assertTrue(current, current.startsWith("1.2.8"));
         assertFalse(current, current.endsWith("-SNAPSHOT"));
-        str = maven.nextVersion(UI.setVersion(current));
+        str = maven.nextVersion(WAR.setVersion(current));
         assertEquals(current, str);
-        str = maven.nextVersion(UI.setVersion("1.1.999"));
-        assertTrue(str, str.equals("1.1.999"));
-        str = maven.nextVersion(UI.setVersion("0.3.1"));
-        assertTrue(str, str.equals(current));
-        str = maven.nextVersion(UI.setVersion("0.3"));
-        assertTrue(str, str.equals(current));
-        str = maven.nextVersion(UI.setVersion("0.2"));
-        assertTrue(str, str.equals(current));
-        str = maven.nextVersion(UI.setVersion("0"));
-        assertTrue(str, str.equals(current));
-        str = maven.nextVersion(UI.setVersion("1.2.0"));
-        assertTrue(str, str.equals("1.2.0"));
     }
 
     @Test
     public void nextVersionSnapshotCP() throws Exception {
         String str;
 
-        str = maven.nextVersion(CP);
+        str = maven.nextVersion(SNAPSHOT);
         assertTrue(str, str.startsWith("3.0.0-"));
-        assertEquals(str, maven.nextVersion(CP.setVersion(str)));
+        assertEquals(str, maven.nextVersion(SNAPSHOT.setVersion(str)));
     }
 
     @Test
@@ -210,9 +195,9 @@ public class MavenTest {
         String snapshot = "3.0.0-20140310.130027-1";
         String str;
 
-        str = maven.nextVersion(CP.setVersion(snapshot));
+        str = maven.nextVersion(SNAPSHOT.setVersion(snapshot));
         assertFalse(str, snapshot.equals(str));
-        assertEquals(str, maven.nextVersion(CP.setVersion(str)));
+        assertEquals(str, maven.nextVersion(SNAPSHOT.setVersion(str)));
         assertTrue(str, str.startsWith("3.0.0-"));
     }
 

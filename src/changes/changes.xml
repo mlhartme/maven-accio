@@ -1,6 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?><document xmlns="http://maven.apache.org/changes/1.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/changes/1.0.0 http://maven.apache.org/xsd/changes-1.0.0.xsd">
   <body>
-    <release date="" version="3.8.0">
+    <release date="2015-02-01" version="3.9.0">
+      <action date="2015-02-01" dev="mhm" type="update">
+        Updated aether 0.9 to 1.0. 
+      </action>
       <action date="2014-08-21" dev="mhm" type="update">
         Updated guave 10.0.1 to 14.0.1.
       </action>
