@@ -99,34 +99,8 @@ public class MavenTest {
         List<Version> versions;
 
         versions = maven.availableVersions(JAR);
-        for (Version version : versions) {
-            if (version.toString().equals("1.0.2")) {
-                return;
-            }
-        }
-        fail();
-    }
-
-    @Ignore  // TODO: re-activate when we have a 2.0 release and 2.0.0-SNAPSHOT was wiped
-    public void latestJarRelease() throws VersionResolutionException, VersionRangeResolutionException {
-        assertEquals("1.0.3", maven.latestVersion(JAR));
-    }
-
-    @Ignore  // TODO: re-activate when we have a 2.0 release and 2.0.0-SNAPSHOT was wiped
-    public void latestWarRelease() throws Exception {
-        Artifact artifact;
-        String latest;
-        FileNode file;
-        MavenProject pom;
-
-        latest = maven.latestRelease(WAR);
-        assertNotNull(latest);
-        artifact = WAR.setVersion(latest);
-        file = maven.resolve(artifact);
-        file.checkFile();
-        assertTrue(file.length() > 0);
-        pom = maven.loadPom(artifact);
-        assertNotNull(pom.getName());
+        assertEquals(1, versions.size());
+        assertEquals( JAR.getVersion(), versions.get(0).toString());
     }
 
     @Test
@@ -157,13 +131,6 @@ public class MavenTest {
         //   resolver.loadPom(artifact);
     }
 
-    @Test
-    public void foo() throws Exception {
-        for (Version version : maven.availableVersions("com.oneandone.sales.diy.de", "diy-business-de")) {
-            System.out.println("version: " + version);
-        }
-    }
-
     @Test(expected = VersionRangeResolutionException.class)
     public void latestVersionNotFound() throws Exception {
         maven.latestVersion(NOT_FOUND);
@@ -174,8 +141,8 @@ public class MavenTest {
         String current;
         String str;
 
-        current = maven.nextVersion(WAR.setVersion("1.2.7"));
-        assertTrue(current, current.startsWith("1.2.8"));
+        current = maven.nextVersion(WAR.setVersion("1.2.6"));
+        assertTrue(current, current.startsWith("1.2.7"));
         assertFalse(current, current.endsWith("-SNAPSHOT"));
         str = maven.nextVersion(WAR.setVersion(current));
         assertEquals(current, str);
