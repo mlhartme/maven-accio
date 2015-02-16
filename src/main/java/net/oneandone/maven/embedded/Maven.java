@@ -461,7 +461,7 @@ public class Maven {
 
         versions = availableVersions(artifact.setVersion("[" + artifact.getVersion() + ",]"));
 
-        // ranges also return SNAPSHOTS. The elease/compatibility notes say they don't, but the respective bug
+        // ranges also return SNAPSHOTS. The release/compatibility notes say they don't, but the respective bug
         // was re-opened: http://jira.codehaus.org/browse/MNG-3092
         for (int i = versions.size() - 1; i >= 0; i--) {
             version = versions.get(i);
