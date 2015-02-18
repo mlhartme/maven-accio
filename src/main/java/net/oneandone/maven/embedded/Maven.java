@@ -649,12 +649,10 @@ public class Maven {
             throws InvalidRepositoryException {
         List<ArtifactRepository> result;
         List<String> actives;
-        boolean hasCentral;
         ArtifactRepository artifactRepository;
 
         result = new ArrayList<>();
         actives = settings.getActiveProfiles();
-        hasCentral = false;
         for (Profile profile : settings.getProfiles()) {
             if (actives.contains(profile.getId())) {
                 for (org.apache.maven.model.Repository repository : SettingsUtils.convertFromSettingsProfile(profile).getRepositories()) {
