@@ -21,6 +21,8 @@ import net.oneandone.sushi.util.Separator;
 import org.apache.maven.RepositoryUtils;
 import org.apache.maven.artifact.InvalidRepositoryException;
 import org.apache.maven.artifact.repository.ArtifactRepository;
+import org.apache.maven.artifact.repository.DefaultArtifactRepository;
+import org.apache.maven.artifact.repository.layout.ArtifactRepositoryLayout;
 import org.apache.maven.artifact.repository.metadata.GroupRepositoryMetadata;
 import org.apache.maven.artifact.repository.metadata.MetadataBridge;
 import org.apache.maven.execution.DefaultMavenExecutionRequest;
@@ -121,15 +123,33 @@ public class Maven {
             session = createSession(transferListener, repositoryListener, system,
                     createLocalRepository(world, localRepository, settings), settings);
             legacySystem = (LegacyRepositorySystem) container.lookup(org.apache.maven.repository.RepositorySystem.class, "default");
-            repositoriesLegacy = repositoriesLegacy(legacySystem, settings);
+            repositoriesLegacy = repositoriesLoad(legacySystem, settings);
             legacySystem.injectAuthentication(session, repositoriesLegacy);
             legacySystem.injectMirror(session, repositoriesLegacy);
             legacySystem.injectProxy(session, repositoriesLegacy);
             return new Maven(world, system, session, container.lookup(ProjectBuilder.class),
-                    RepositoryUtils.toRepos(repositoriesLegacy), repositoriesLegacy);
+                    loadToResolveRepositories(legacySystem, repositoriesLegacy), repositoriesLegacy);
         } catch (InvalidRepositoryException | ComponentLookupException e) {
             throw new IllegalStateException(e);
         }
+    }
+
+    private static List<RemoteRepository> loadToResolveRepositories(LegacyRepositorySystem legacy, List<ArtifactRepository> remoteLoad) throws InvalidRepositoryException {
+        List<RemoteRepository> result;
+        boolean hasCentral;
+
+        result = RepositoryUtils.toRepos(remoteLoad);
+        hasCentral = false;
+        for (RemoteRepository remote : result) {
+            if ("central".equals(remote.getId())) {
+                hasCentral = true;
+            }
+        }
+        if (!hasCentral) {
+            // Maven defines central in the master parent; so I have to add it here if the settings don't bring their own central repo ...
+            result.add(RepositoryUtils.toRepo(legacy.createDefaultRemoteRepository()));
+        }
+        return result;
     }
 
     private static LocalRepository createLocalRepository(World world, FileNode localRepository, Settings settings) {
@@ -263,21 +283,29 @@ public class Maven {
     private final World world;
     private final RepositorySystem repositorySystem;
     private final DefaultRepositorySystemSession repositorySession;
-    private final List<RemoteRepository> remote;
-    private final List<ArtifactRepository> remoteLegacy; // needed to load poms :(
+
+    /** Remote repositories used to load poms. Legacy objects :( */
+    private final List<ArtifactRepository> remoteLoad;
+
+    /**
+     * Used to resolve artifacts. Repositories from remoteLoadPom repo as modern objects AND central if it's not yet there.
+     * remoteLoad and remoteResolve differ because Maven's default central repository is defined in the master parent,
+     * not the built-in settings. Thus, parent loading always know central.
+     */
+    private final List<RemoteRepository> remoteResolve;
 
     // TODO: use a project builder that works without legacy classes, esp. without ArtifactRepository ...
     // As far as I know, there's no such project builder as of mvn 3.0.2.
     private final ProjectBuilder builder;
 
     public Maven(World world, RepositorySystem repositorySystem, DefaultRepositorySystemSession repositorySession, ProjectBuilder builder,
-                 List<RemoteRepository> remote, List<ArtifactRepository> remoteLegacy) {
+                 List<RemoteRepository> remoteResolve, List<ArtifactRepository> remoteLoad) {
         this.world = world;
         this.repositorySystem = repositorySystem;
         this.repositorySession = repositorySession;
         this.builder = builder;
-        this.remote = remote;
-        this.remoteLegacy = remoteLegacy;
+        this.remoteResolve = remoteResolve;
+        this.remoteLoad = remoteLoad;
     }
 
     public World getWorld() {
@@ -292,12 +320,12 @@ public class Maven {
         return repositorySession;
     }
 
-    public List<ArtifactRepository> remoteRepositoriesLegacy() {
-        return remoteLegacy;
+    public List<ArtifactRepository> remoteLoadRepositories() {
+        return remoteLoad;
     }
 
-    public List<RemoteRepository> remoteRepositories() {
-        return remote;
+    public List<RemoteRepository> remoteResolveRepositories() {
+        return remoteResolve;
     }
 
     public FileNode getLocalRepositoryDir() {
@@ -311,7 +339,7 @@ public class Maven {
     public List<FileNode> files(List<Artifact> artifacts) {
         List<FileNode> result;
 
-        result = new ArrayList<FileNode>();
+        result = new ArrayList<>();
         for (Artifact a : artifacts) {
             result.add(file(a));
         }
@@ -337,7 +365,7 @@ public class Maven {
     }
 
     public FileNode resolve(Artifact artifact) throws ArtifactResolutionException {
-        return resolve(artifact, remote);
+        return resolve(artifact, remoteResolve);
     }
 
     public FileNode resolve(Artifact artifact, List<RemoteRepository> remoteRepositories) throws ArtifactResolutionException {
@@ -378,7 +406,7 @@ public class Maven {
 
         request = new DefaultProjectBuildingRequest();
         request.setRepositorySession(repositorySession);
-        request.setRemoteRepositories(remoteLegacy);
+        request.setRemoteRepositories(remoteLoad);
         request.setProcessPlugins(false);
         request.setValidationLevel(ModelBuildingRequest.VALIDATION_LEVEL_MINIMAL);
         request.setSystemProperties(System.getProperties());
@@ -424,7 +452,7 @@ public class Maven {
 
         // CAUTION: do not use version "LATEST" because the respective field in metadata.xml is not set reliably:
         range = artifact.setVersion("[,]");
-        request = new VersionRangeRequest(range, remote, null);
+        request = new VersionRangeRequest(range, remoteResolve, null);
         result = repositorySystem.resolveVersionRange(repositorySession, request);
         versions = result.getVersions();
         if (versions.size() == 0) {
@@ -442,7 +470,7 @@ public class Maven {
         VersionRequest request;
         VersionResult result;
 
-        request = new VersionRequest(artifact, remote, null);
+        request = new VersionRequest(artifact, remoteResolve, null);
         result = repositorySystem.resolveVersion(repositorySession, request);
         return result.getVersion();
     }
@@ -484,7 +512,7 @@ public class Maven {
         VersionRangeRequest request;
         VersionRangeResult rangeResult;
 
-        request = new VersionRangeRequest(artifact, remote, null);
+        request = new VersionRangeRequest(artifact, remoteResolve, null);
         rangeResult = repositorySystem.resolveVersionRange(repositorySession, request);
         return rangeResult.getVersions();
     }
@@ -617,17 +645,21 @@ public class Maven {
         return null;
     }
 
-    private static List<ArtifactRepository> repositoriesLegacy(LegacyRepositorySystem legacy, Settings settings)
+    private static List<ArtifactRepository> repositoriesLoad(LegacyRepositorySystem legacy, Settings settings)
             throws InvalidRepositoryException {
         List<ArtifactRepository> result;
         List<String> actives;
+        boolean hasCentral;
+        ArtifactRepository artifactRepository;
 
         result = new ArrayList<>();
         actives = settings.getActiveProfiles();
+        hasCentral = false;
         for (Profile profile : settings.getProfiles()) {
             if (actives.contains(profile.getId())) {
                 for (org.apache.maven.model.Repository repository : SettingsUtils.convertFromSettingsProfile(profile).getRepositories()) {
-                    result.add(legacy.buildArtifactRepository(repository));
+                    artifactRepository = legacy.buildArtifactRepository(repository);
+                    result.add(artifactRepository);
                 }
             }
         }
