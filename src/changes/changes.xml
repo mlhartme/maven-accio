@@ -1,5 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?><document xmlns="http://maven.apache.org/changes/1.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/changes/1.0.0 http://maven.apache.org/xsd/changes-1.0.0.xsd">
   <body>
+    <release date="2015-02-23" version="3.11.0">
+      <action date="2015-02-18" dev="mhm" type="fix">
+        Fix missing central repository when loading poms, because you might have to load a parent from Maven central.
+      </action>
+      <action date="2015-02-18" dev="mhm" type="update">
+        Rename remoteLoadRepositories to remoteLegacyRepositories and remoteResolveRepositories to remoteRepositories.
+      </action>
+    </release>
     <release date="2015-02-23" version="3.10.0">
       <action date="2015-02-18" dev="mhm" type="update">
         Rename remoteRepositoriesLegacy to remoteLoadRepositories and remoteRepositories to remoteResolveRepositories.

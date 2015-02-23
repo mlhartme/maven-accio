@@ -21,8 +21,6 @@ import net.oneandone.sushi.util.Separator;
 import org.apache.maven.RepositoryUtils;
 import org.apache.maven.artifact.InvalidRepositoryException;
 import org.apache.maven.artifact.repository.ArtifactRepository;
-import org.apache.maven.artifact.repository.DefaultArtifactRepository;
-import org.apache.maven.artifact.repository.layout.ArtifactRepositoryLayout;
 import org.apache.maven.artifact.repository.metadata.GroupRepositoryMetadata;
 import org.apache.maven.artifact.repository.metadata.MetadataBridge;
 import org.apache.maven.execution.DefaultMavenExecutionRequest;
@@ -123,38 +121,21 @@ public class Maven {
             session = createSession(transferListener, repositoryListener, system,
                     createLocalRepository(world, localRepository, settings), settings);
             legacySystem = (LegacyRepositorySystem) container.lookup(org.apache.maven.repository.RepositorySystem.class, "default");
-            repositoriesLegacy = repositoriesLoad(legacySystem, settings);
+            repositoriesLegacy = repositoriesLegacy(legacySystem, settings);
             legacySystem.injectAuthentication(session, repositoriesLegacy);
             legacySystem.injectMirror(session, repositoriesLegacy);
             legacySystem.injectProxy(session, repositoriesLegacy);
             return new Maven(world, system, session, container.lookup(ProjectBuilder.class),
-                    loadToResolveRepositories(legacySystem, repositoriesLegacy), repositoriesLegacy);
+                    RepositoryUtils.toRepos(repositoriesLegacy), repositoriesLegacy);
         } catch (InvalidRepositoryException | ComponentLookupException e) {
             throw new IllegalStateException(e);
         }
     }
 
-    private static List<RemoteRepository> loadToResolveRepositories(LegacyRepositorySystem legacy, List<ArtifactRepository> remoteLoad) throws InvalidRepositoryException {
-        List<RemoteRepository> result;
-        boolean hasCentral;
-
-        result = RepositoryUtils.toRepos(remoteLoad);
-        hasCentral = false;
-        for (RemoteRepository remote : result) {
-            if ("central".equals(remote.getId())) {
-                hasCentral = true;
-            }
-        }
-        if (!hasCentral) {
-            // Maven defines central in the master parent; so I have to add it here if the settings don't bring their own central repo ...
-            result.add(RepositoryUtils.toRepo(legacy.createDefaultRemoteRepository()));
-        }
-        return result;
-    }
-
     private static LocalRepository createLocalRepository(World world, FileNode localRepository, Settings settings) {
         String localRepositoryStr;
         LocalRepository localRepositoryObj;
+
         if (localRepository == null) {
             // TODO: who has precedence: repodir from settings or from MAVEN_OPTS
             localRepositoryStr = settings.getLocalRepository();
@@ -284,28 +265,26 @@ public class Maven {
     private final RepositorySystem repositorySystem;
     private final DefaultRepositorySystemSession repositorySession;
 
-    /** Remote repositories used to load poms. Legacy objects :( */
-    private final List<ArtifactRepository> remoteLoad;
-
     /**
-     * Used to resolve artifacts. Repositories from remoteLoadPom repo as modern objects AND central if it's not yet there.
-     * remoteLoad and remoteResolve differ because Maven's default central repository is defined in the master parent,
-     * not the built-in settings. Thus, parent loading always know central.
+     * Used to resolve artifacts.
      */
-    private final List<RemoteRepository> remoteResolve;
+    private final List<RemoteRepository> remote;
+
+    /** Remote repositories used to load poms. Legacy objects :( */
+    private final List<ArtifactRepository> remoteLegacy;
 
     // TODO: use a project builder that works without legacy classes, esp. without ArtifactRepository ...
     // As far as I know, there's no such project builder as of mvn 3.0.2.
     private final ProjectBuilder builder;
 
     public Maven(World world, RepositorySystem repositorySystem, DefaultRepositorySystemSession repositorySession, ProjectBuilder builder,
-                 List<RemoteRepository> remoteResolve, List<ArtifactRepository> remoteLoad) {
+                 List<RemoteRepository> remote, List<ArtifactRepository> remoteLegacy) {
         this.world = world;
         this.repositorySystem = repositorySystem;
         this.repositorySession = repositorySession;
         this.builder = builder;
-        this.remoteResolve = remoteResolve;
-        this.remoteLoad = remoteLoad;
+        this.remote = remote;
+        this.remoteLegacy = remoteLegacy;
     }
 
     public World getWorld() {
@@ -320,12 +299,12 @@ public class Maven {
         return repositorySession;
     }
 
-    public List<ArtifactRepository> remoteLoadRepositories() {
-        return remoteLoad;
+    public List<ArtifactRepository> remoteLegacyRepositories() {
+        return remoteLegacy;
     }
 
     public List<RemoteRepository> remoteResolveRepositories() {
-        return remoteResolve;
+        return remote;
     }
 
     public FileNode getLocalRepositoryDir() {
@@ -365,7 +344,7 @@ public class Maven {
     }
 
     public FileNode resolve(Artifact artifact) throws ArtifactResolutionException {
-        return resolve(artifact, remoteResolve);
+        return resolve(artifact, remote);
     }
 
     public FileNode resolve(Artifact artifact, List<RemoteRepository> remoteRepositories) throws ArtifactResolutionException {
@@ -406,15 +385,15 @@ public class Maven {
 
         request = new DefaultProjectBuildingRequest();
         request.setRepositorySession(repositorySession);
-        request.setRemoteRepositories(remoteLoad);
+        request.setRemoteRepositories(remoteLegacy);
         request.setProcessPlugins(false);
         request.setValidationLevel(ModelBuildingRequest.VALIDATION_LEVEL_MINIMAL);
         request.setSystemProperties(System.getProperties());
         if (userProperties != null) {
             request.setUserProperties(userProperties);
         }
-        //If you don't turn this into RepositoryMerging.REQUEST_DOMINANT the dependencies will be resolved against Maven Central
-        //and not against the configured repositories. The default of the DefaultProjectBuildingRequest is
+        // If you don't turn this into RepositoryMerging.REQUEST_DOMINANT the dependencies will be resolved against Maven Central
+        // and not against the configured repositories. The default of the DefaultProjectBuildingRequest is
         // RepositoryMerging.POM_DOMINANT.
         request.setRepositoryMerging(ProjectBuildingRequest.RepositoryMerging.REQUEST_DOMINANT);
         request.setResolveDependencies(resolve);
@@ -452,7 +431,7 @@ public class Maven {
 
         // CAUTION: do not use version "LATEST" because the respective field in metadata.xml is not set reliably:
         range = artifact.setVersion("[,]");
-        request = new VersionRangeRequest(range, remoteResolve, null);
+        request = new VersionRangeRequest(range, remote, null);
         result = repositorySystem.resolveVersionRange(repositorySession, request);
         versions = result.getVersions();
         if (versions.size() == 0) {
@@ -470,7 +449,7 @@ public class Maven {
         VersionRequest request;
         VersionResult result;
 
-        request = new VersionRequest(artifact, remoteResolve, null);
+        request = new VersionRequest(artifact, remote, null);
         result = repositorySystem.resolveVersion(repositorySession, request);
         return result.getVersion();
     }
@@ -512,7 +491,7 @@ public class Maven {
         VersionRangeRequest request;
         VersionRangeResult rangeResult;
 
-        request = new VersionRangeRequest(artifact, remoteResolve, null);
+        request = new VersionRangeRequest(artifact, remote, null);
         rangeResult = repositorySystem.resolveVersionRange(repositorySession, request);
         return rangeResult.getVersions();
     }
@@ -645,21 +624,34 @@ public class Maven {
         return null;
     }
 
-    private static List<ArtifactRepository> repositoriesLoad(LegacyRepositorySystem legacy, Settings settings)
+    private static List<ArtifactRepository> repositoriesLegacy(LegacyRepositorySystem legacy, Settings settings)
             throws InvalidRepositoryException {
+        boolean central;
         List<ArtifactRepository> result;
         List<String> actives;
         ArtifactRepository artifactRepository;
 
+        central = false;
         result = new ArrayList<>();
         actives = settings.getActiveProfiles();
         for (Profile profile : settings.getProfiles()) {
             if (actives.contains(profile.getId()) || profile.getActivation().isActiveByDefault()) {
                 for (org.apache.maven.model.Repository repository : SettingsUtils.convertFromSettingsProfile(profile).getRepositories()) {
                     artifactRepository = legacy.buildArtifactRepository(repository);
+                    if ("central".equals(artifactRepository.getId())) {
+                        central = true;
+                    }
                     result.add(artifactRepository);
                 }
             }
+        }
+        if (!central) {
+            /* Maven defines the default central repository in its master parent - and not in the default settings, which I'd prefer.
+               As a consequent, central is not always defined when loading the settings.
+               I first added central to repositories only, because legacy repositories are used to load poms which ultimatly load the
+               master parent with it's repository definition. However, the parent might have to be loaded from central, so repositories
+               also need a central definition. */
+            result.add(legacy.createDefaultRemoteRepository());
         }
         return result;
     }
