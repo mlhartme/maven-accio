@@ -1,11 +1,14 @@
 <?xml version="1.0" encoding="UTF-8"?><document xmlns="http://maven.apache.org/changes/1.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/changes/1.0.0 http://maven.apache.org/xsd/changes-1.0.0.xsd">
   <body>
-    <release date="2015-02-18" version="3.10.0">
+    <release date="2015-02-23" version="3.10.0">
       <action date="2015-02-18" dev="mhm" type="update">
         Rename remoteRepositoriesLegacy to remoteLoadRepositories and remoteRepositories to remoteResolveRepositories.
       </action>
       <action date="2015-02-18" dev="mhm" type="fix">
-        Fix missing central repository.
+        Fix missing central repository when resolving artifacts.
+      </action>
+      <action date="2015-02-23" dev="mhm" type="fix">
+        Fix activeByDefault when loading settings.
       </action>
     </release>
     <release date="2015-02-01" version="3.9.0">
