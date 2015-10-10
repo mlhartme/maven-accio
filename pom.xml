@@ -4,7 +4,7 @@
   <parent>
     <groupId>net.oneandone.maven.poms</groupId>
     <artifactId>foss-parent</artifactId>
-    <version>1.5.1</version>
+    <version>1.5.7</version>
     <relativePath />
   </parent>
 
@@ -17,10 +17,10 @@
   <packaging>jar</packaging>
 
   <properties>
-    <aetherVersion>1.0.0.v20140518</aetherVersion>
+    <aetherVersion>1.0.2.v20150114</aetherVersion>
     <guava.version>14.0.1</guava.version>
-    <mavenVersion>3.2.5</mavenVersion>
-    <wagonVersion>2.8</wagonVersion>
+    <mavenVersion>3.3.3</mavenVersion>
+    <wagonVersion>2.9</wagonVersion>
 
     <enforcer.skip>true</enforcer.skip>
 
@@ -75,7 +75,7 @@
       <!-- not used directly, but I want to force using the latest version in the dependency tree:-->
       <groupId>org.codehaus.plexus</groupId>
       <artifactId>plexus-utils</artifactId>
-      <version>3.0.21</version>
+      <version>3.0.22</version>
     </dependency>
 
 
