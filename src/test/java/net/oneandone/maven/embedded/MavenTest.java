@@ -20,7 +20,6 @@ import net.oneandone.sushi.fs.file.FileNode;
 import org.apache.maven.project.MavenProject;
 import org.apache.maven.project.ProjectBuildingException;
 import org.eclipse.aether.artifact.DefaultArtifact;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.eclipse.aether.artifact.Artifact;
 import org.eclipse.aether.resolution.ArtifactResolutionException;
@@ -35,13 +34,12 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
 
 public class MavenTest {
     private static final Artifact JAR = new DefaultArtifact("net.oneandone:sushi:2.8.16");
     private static final Artifact WAR = new DefaultArtifact("wicket:wicket-quickstart:war:x");
     private static final Artifact NOT_FOUND = new DefaultArtifact("no.such.group:foo:x");
-    private static final Artifact SNAPSHOT = new DefaultArtifact("net.oneandone:stool:3.0.0-SNAPSHOT");
+    private static final Artifact SNAPSHOT = new DefaultArtifact("net.oneandone.stool:main:3.3.0-SNAPSHOT");
 
     private World world;
     private Maven maven;
@@ -109,7 +107,7 @@ public class MavenTest {
         String version;
 
         version = maven.latestVersion(SNAPSHOT);
-        assertTrue(version, version.startsWith("3.0.0-"));
+        assertTrue(version, version.startsWith("3.3.0-"));
         maven.resolve(SNAPSHOT.setVersion(version)).checkFile();
     }
 
@@ -121,7 +119,7 @@ public class MavenTest {
 
         latest = maven.latestVersion(SNAPSHOT);
         assertNotNull(latest);
-        assertTrue(latest, latest.startsWith("3.0.0-"));
+        assertTrue(latest, latest.startsWith("3.3.0-"));
         artifact = SNAPSHOT.setVersion(latest);
         file = maven.resolve(artifact);
         file.checkFile();
@@ -153,7 +151,7 @@ public class MavenTest {
         String str;
 
         str = maven.nextVersion(SNAPSHOT);
-        assertTrue(str, str.startsWith("3.0.0-"));
+        assertTrue(str, str.startsWith("3.3.0-"));
         assertEquals(str, maven.nextVersion(SNAPSHOT.setVersion(str)));
     }
 
