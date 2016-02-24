@@ -135,6 +135,12 @@
       <groupId>org.eclipse.aether</groupId>
       <artifactId>aether-transport-http</artifactId>
       <version>${aetherVersion}</version>
+      <exclusions>
+        <exclusion><!-- because clients may choose their implementation -->
+          <groupId>org.slf4j</groupId>
+          <artifactId>jcl-over-slf4j</artifactId>
+        </exclusion>
+      </exclusions>
     </dependency>
     <dependency>
       <!-- not used directly, but I want to force using the latest version in the dependency tree:-->
@@ -153,12 +159,6 @@
            http://maven.apache.org/wagon/wagon-providers/wagon-http-lightweight/)! -->
       <artifactId>wagon-http</artifactId>
       <version>${wagonVersion}</version>
-      <exclusions>
-        <exclusion><!-- because aether-transport brings slf4j-over-jcl -->
-          <groupId>commons-logging</groupId>
-          <artifactId>commons-logging</artifactId>
-        </exclusion>
-      </exclusions>
     </dependency>
 
     <dependency>
