@@ -45,7 +45,7 @@ public class MavenTest {
     private Maven maven;
 
     public MavenTest() throws IOException {
-        world = new World();
+        world = World.create();
         maven = Maven.withSettings(world);
     }
 
@@ -123,7 +123,7 @@ public class MavenTest {
         artifact = SNAPSHOT.setVersion(latest);
         file = maven.resolve(artifact);
         file.checkFile();
-        assertTrue(file.length() > 0);
+        assertTrue(file.size() > 0);
         // cannot load poms >controlpanel-wars 1.0-SNAPSHOT>controlpanel 1.0-SNAPSHOT because
         // the last pom is not deployed, not even on billy ...
         //   resolver.loadPom(artifact);
