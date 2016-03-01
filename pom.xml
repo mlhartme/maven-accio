@@ -13,7 +13,7 @@
 
   <groupId>net.oneandone.maven</groupId>
   <artifactId>embedded</artifactId>
-  <version>3.12.0</version>
+  <version>3.12.1-SNAPSHOT</version>
   <packaging>jar</packaging>
 
   <properties>
@@ -61,7 +61,7 @@
     <connection>scm:git:ssh://git@github.com/mlhartme/maven-embedded.git</connection>
     <developerConnection>scm:git:ssh://git@github.com/mlhartme/maven-embedded.git</developerConnection>
     <url>https://github.com/mlhartme/maven-embedded</url>
-    <tag>embedded-3.12.0</tag>
+    <tag>HEAD</tag>
   </scm>
 
   <dependencies>
