@@ -8,8 +8,8 @@
     <relativePath />
   </parent>
 
-  <name>Maven Utilities</name>
-  <description>Maven Utilities. Useful to learn about aether: https://github.com/eclipse/aether-demo</description>
+  <name>Maven Embedded</name>
+  <description>Load poms, resolve dependencies. Useful to learn about aether: https://github.com/eclipse/aether-demo</description>
 
   <groupId>net.oneandone.maven</groupId>
   <artifactId>embedded</artifactId>
