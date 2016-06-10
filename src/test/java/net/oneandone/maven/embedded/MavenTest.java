@@ -39,7 +39,7 @@ public class MavenTest {
     private static final Artifact JAR = new DefaultArtifact("net.oneandone:sushi:2.8.16");
     private static final Artifact WAR = new DefaultArtifact("wicket:wicket-quickstart:war:x");
     private static final Artifact NOT_FOUND = new DefaultArtifact("no.such.group:foo:x");
-    private static final Artifact SNAPSHOT = new DefaultArtifact("net.oneandone.stool:main:3.3.3-SNAPSHOT");
+    private static final Artifact SNAPSHOT = new DefaultArtifact("net.oneandone.stool:main:3.4.0-SNAPSHOT");
 
     private World world;
     private Maven maven;
@@ -107,7 +107,7 @@ public class MavenTest {
         String version;
 
         version = maven.latestVersion(SNAPSHOT);
-        assertTrue(version, version.startsWith("3.3.3-"));
+        assertTrue(version, version.startsWith("3.4.0-"));
         maven.resolve(SNAPSHOT.setVersion(version)).checkFile();
     }
 
@@ -119,7 +119,7 @@ public class MavenTest {
 
         latest = maven.latestVersion(SNAPSHOT);
         assertNotNull(latest);
-        assertTrue(latest, latest.startsWith("3.3.3-"));
+        assertTrue(latest, latest.startsWith("3.4.0-"));
         artifact = SNAPSHOT.setVersion(latest);
         file = maven.resolve(artifact);
         file.checkFile();
@@ -151,7 +151,7 @@ public class MavenTest {
         String str;
 
         str = maven.nextVersion(SNAPSHOT);
-        assertTrue(str, str.startsWith("3.3.3-"));
+        assertTrue(str, str.startsWith("3.4.0-"));
         assertEquals(str, maven.nextVersion(SNAPSHOT.setVersion(str)));
     }
 
