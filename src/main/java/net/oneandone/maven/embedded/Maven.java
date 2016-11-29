@@ -635,7 +635,7 @@ public class Maven {
         result = new ArrayList<>();
         actives = settings.getActiveProfiles();
         for (Profile profile : settings.getProfiles()) {
-            if (actives.contains(profile.getId()) || profile.getActivation().isActiveByDefault()) {
+            if (actives.contains(profile.getId()) || (profile.getActivation() != null && profile.getActivation().isActiveByDefault())) {
                 for (org.apache.maven.model.Repository repository : SettingsUtils.convertFromSettingsProfile(profile).getRepositories()) {
                     artifactRepository = legacy.buildArtifactRepository(repository);
                     if ("central".equals(artifactRepository.getId())) {
