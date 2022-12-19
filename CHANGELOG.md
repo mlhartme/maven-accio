@@ -2,6 +2,7 @@
 
 ### 3.13.0 (pending)
 
+* update lazy foss parent 1.0.2 to maven-parent 1.6.1: CAUTION: as a result, Java 17 is required now
 * improved Maven.locateMaven:
   * check MAVEN_HOME first
   * properly deal with symlins
