@@ -592,14 +592,16 @@ public class Maven {
 
         home = System.getenv("MAVEN_HOME");
         if (home != null) {
-            return world.file(home);
+            return world.file(home).join("conf").checkDirectory();
         }
         mvn = which(world, "mvn");
         if (mvn != null) {
+            int count = 0;
             while (mvn.isLink()) {
-                System.out.print("resolve " + mvn);
                 mvn = mvn.resolveLink();
-                System.out.println(" to " + mvn);
+                if (++count > 5) {
+                    throw new IOException("cannot locate maven: too many symlinks: " + mvn.getAbsolute());
+                }
             }
             mvn = mvn.getParent().getParent();
             conf = mvn.join("conf");
