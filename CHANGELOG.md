@@ -2,6 +2,12 @@
 
 ### 3.13.0 (pending)
 
+* improved Maven.locateMaven:
+  * check MAVEN_HOME first
+  * properly deal with symlins
+  * properly deal with libexec directory
+  * renamed locateMavenConf
+* Renamed branch `master` to `main`
 * Update Sushi 3.1.2 to 3.3.0
 
 

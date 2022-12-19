@@ -561,10 +561,10 @@ public class Maven {
         builder = (DefaultMavenSettingsBuilder) container.lookup(MavenSettingsBuilder.ROLE);
         request = new DefaultMavenExecutionRequest();
         if (globalSettings == null) {
-            globalSettings = locateMaven(world).join("conf/settings.xml");
+            globalSettings = locateMavenConf(world).join("settings.xml");
         }
         if (userSettings == null) {
-            userSettings = (FileNode) world.getHome().join(".m2/settings.xml");
+            userSettings = world.getHome().join(".m2/settings.xml");
         }
         request.setGlobalSettingsFile(globalSettings.toPath().toFile());
         request.setUserSettingsFile(userSettings.toPath().toFile());
@@ -585,23 +585,34 @@ public class Maven {
         return null;
     }
 
-    public static FileNode locateMaven(World world) throws IOException {
+    public static FileNode locateMavenConf(World world) throws IOException {
         String home;
         FileNode mvn;
-
-        mvn = which(world, "mvn");
-        if (mvn != null) {
-            mvn = mvn.getParent().getParent();
-            if (mvn.join("conf").isDirectory()) {
-                return mvn;
-            }
-        }
+        FileNode conf;
 
         home = System.getenv("MAVEN_HOME");
         if (home != null) {
             return world.file(home);
         }
-        throw new IOException("cannot locate maven");
+        mvn = which(world, "mvn");
+        if (mvn != null) {
+            while (mvn.isLink()) {
+                System.out.print("resolve " + mvn);
+                mvn = mvn.resolveLink();
+                System.out.println(" to " + mvn);
+            }
+            mvn = mvn.getParent().getParent();
+            conf = mvn.join("conf");
+            if (conf.isDirectory()) {
+                return conf;
+            }
+            conf = mvn.join("libexec/conf");
+            if (conf.isDirectory()) {
+                return conf;
+            }
+        }
+
+        throw new IOException("cannot locate maven's conf directory - consider settings MAVEN_HOME or adding mvn to your path");
     }
 
     // TODO: sushi
