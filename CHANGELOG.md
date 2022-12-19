@@ -1,5 +1,10 @@
 ## Changelog
 
+### 3.13.0 (pending)
+
+* Update Sushi 3.1.2 to 3.3.0
+
+
 ### 3.12.2 (2016-12-05)
 
 * Fixed NPE in Maven.repositoriesLegacy() (for profiles without activation).
