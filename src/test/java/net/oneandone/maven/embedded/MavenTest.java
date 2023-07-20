@@ -39,7 +39,7 @@ public class MavenTest {
     private static final Artifact JAR = new DefaultArtifact("net.oneandone:sushi:2.8.16");
     private static final Artifact WAR = new DefaultArtifact("wicket:wicket-quickstart:war:x");
     private static final Artifact NOT_FOUND = new DefaultArtifact("no.such.group:foo:x");
-    private static final Artifact SNAPSHOT = new DefaultArtifact("net.oneandone:pommes:3.4.0-SNAPSHOT");
+    private static final Artifact SNAPSHOT = new DefaultArtifact("net.oneandone:pommes:3.4.1-SNAPSHOT");
 
     private World world;
     private Maven maven;
@@ -151,7 +151,7 @@ public class MavenTest {
         String str;
 
         str = maven.nextVersion(SNAPSHOT);
-        assertTrue(str, str.startsWith("3.4.0-"));
+        assertTrue(str, str.startsWith("3.4.1-"));
         assertEquals(str, maven.nextVersion(SNAPSHOT.setVersion(str)));
     }
 
