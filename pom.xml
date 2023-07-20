@@ -120,21 +120,6 @@
       <version>${resolverVersion}</version>
     </dependency>
 
-    <!-- TODO
-    <dependency>
-      <groupId>javax.inject</groupId>
-      <artifactId>javax.inject</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.eclipse.sisu</groupId>
-      <artifactId>org.eclipse.sisu.inject</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>com.google.inject</groupId>
-      <artifactId>guice</artifactId>
-      <optional>true</optional>
-    </dependency -->
-
     <dependency>
       <!-- not used directly, but I want to force using the latest version in the dependency tree:-->
       <groupId>org.apache.maven.wagon</groupId>

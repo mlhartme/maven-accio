@@ -2,6 +2,7 @@
 
 ### 4.0.0 (pending)
 
+* update Maven 3.3.9 libraries to 3.5.4
 * switch from Aether to Maven Artifact Resolver
 * switch from MavenSettingsBuilder to SettingsBuilder (fixes deprecation)
 
