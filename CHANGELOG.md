@@ -1,9 +1,9 @@
 ## Changelog
 
-### 3.13.1 (pending)
+### 4.0.0 (pending)
 
-* switch from MavenSettingsBuilder to SettingsBuilder
-* update eclipse aether 1.0.2.v20150114 to 1.1.0
+* switch from Aether to Maven Artifact Resolver
+* switch from MavenSettingsBuilder to SettingsBuilder (fixes deprecation)
 
 
 ### 3.13.0 (2022-12-19)
