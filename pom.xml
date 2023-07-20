@@ -17,7 +17,7 @@
   <packaging>jar</packaging>
 
   <properties>
-    <mavenVersion>3.6.3</mavenVersion>
+    <mavenVersion>3.8.8</mavenVersion>
     <resolverVersion>1.9.13</resolverVersion>
     <wagonVersion>3.5.3</wagonVersion>
   </properties>
