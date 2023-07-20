@@ -107,7 +107,7 @@ public class MavenTest {
         String version;
 
         version = maven.latestVersion(SNAPSHOT);
-        assertTrue(version, version.startsWith("3.4.0-"));
+        assertTrue(version, version.startsWith("3.4.1-"));
         maven.resolve(SNAPSHOT.setVersion(version)).checkFile();
     }
 
@@ -119,7 +119,7 @@ public class MavenTest {
 
         latest = maven.latestVersion(SNAPSHOT);
         assertNotNull(latest);
-        assertTrue(latest, latest.startsWith("3.4.0-"));
+        assertTrue(latest, latest.startsWith("3.4.1-"));
         artifact = SNAPSHOT.setVersion(latest);
         file = maven.resolve(artifact);
         file.checkFile();
