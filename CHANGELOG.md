@@ -2,7 +2,7 @@
 
 ### 4.0.0 (pending)
 
-* update Maven 3.3.9 libraries to 3.8.8
+* update Maven 3.3.9 libraries to 3.9.3
 * update Wagon 2.10 to 3.5.3
 * switch from Aether 1.0.2.xx to Maven Artifact Resolver 1.9.13 (https://maven.apache.org/resolver/)
 * switch from MavenSettingsBuilder to SettingsBuilder (fixes deprecation)
