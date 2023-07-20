@@ -204,7 +204,7 @@ public class Maven {
         session.setLocalRepositoryManager(system.newLocalRepositoryManager(session, localRepository));
         DefaultMirrorSelector mirrorSelector = new DefaultMirrorSelector();
         for (Mirror mirror : settings.getMirrors()) {
-            mirrorSelector.add(mirror.getId(), mirror.getUrl(), mirror.getLayout(), false, mirror.getMirrorOf(),
+            mirrorSelector.add(mirror.getId(), mirror.getUrl(), mirror.getLayout(), false, false, mirror.getMirrorOf(),
                                mirror.getMirrorOfLayouts());
         }
         session.setMirrorSelector(mirrorSelector);
