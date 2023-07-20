@@ -2,6 +2,7 @@
 
 ### 3.13.1 (pending)
 
+* switch from MavenSettingsBuilder to SettingsBuilder
 * update eclipse aether 1.0.2.v20150114 to 1.1.0
 
 

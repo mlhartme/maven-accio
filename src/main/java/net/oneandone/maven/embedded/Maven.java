@@ -23,8 +23,6 @@ import org.apache.maven.artifact.InvalidRepositoryException;
 import org.apache.maven.artifact.repository.ArtifactRepository;
 import org.apache.maven.artifact.repository.metadata.GroupRepositoryMetadata;
 import org.apache.maven.artifact.repository.metadata.MetadataBridge;
-import org.apache.maven.execution.DefaultMavenExecutionRequest;
-import org.apache.maven.execution.MavenExecutionRequest;
 import org.apache.maven.model.building.ModelBuildingRequest;
 import org.apache.maven.project.DefaultProjectBuildingRequest;
 import org.apache.maven.project.MavenProject;
@@ -34,13 +32,16 @@ import org.apache.maven.project.ProjectBuildingRequest;
 import org.apache.maven.project.ProjectBuildingResult;
 import org.apache.maven.repository.internal.MavenRepositorySystemUtils;
 import org.apache.maven.repository.legacy.LegacyRepositorySystem;
-import org.apache.maven.settings.DefaultMavenSettingsBuilder;
-import org.apache.maven.settings.MavenSettingsBuilder;
 import org.apache.maven.settings.Mirror;
 import org.apache.maven.settings.Profile;
 import org.apache.maven.settings.Server;
 import org.apache.maven.settings.Settings;
 import org.apache.maven.settings.SettingsUtils;
+import org.apache.maven.settings.building.DefaultSettingsBuilder;
+import org.apache.maven.settings.building.DefaultSettingsBuildingRequest;
+import org.apache.maven.settings.building.SettingsBuilder;
+import org.apache.maven.settings.building.SettingsBuildingException;
+import org.apache.maven.settings.building.SettingsBuildingRequest;
 import org.codehaus.plexus.DefaultContainerConfiguration;
 import org.codehaus.plexus.DefaultPlexusContainer;
 import org.codehaus.plexus.PlexusConstants;
@@ -114,7 +115,7 @@ public class Maven {
         try {
             try {
                 settings = loadSettings(world, globalSettings, userSettings, container);
-            } catch (XmlPullParserException e) {
+            } catch (SettingsBuildingException | XmlPullParserException e) {
                 throw new IOException("cannot load settings: " + e.getMessage(), e);
             }
             system = container.lookup(RepositorySystem.class);
@@ -553,12 +554,12 @@ public class Maven {
      * @param userSettings null to use default
      */
     public static Settings loadSettings(World world, FileNode globalSettings, FileNode userSettings, DefaultPlexusContainer container)
-            throws IOException, XmlPullParserException, ComponentLookupException {
-        DefaultMavenSettingsBuilder builder;
-        MavenExecutionRequest request;
+            throws IOException, XmlPullParserException, ComponentLookupException, SettingsBuildingException {
+        DefaultSettingsBuilder builder;
+        SettingsBuildingRequest request;
 
-        builder = (DefaultMavenSettingsBuilder) container.lookup(MavenSettingsBuilder.ROLE);
-        request = new DefaultMavenExecutionRequest();
+        builder = (DefaultSettingsBuilder) container.lookup(SettingsBuilder.class);
+        request = new DefaultSettingsBuildingRequest();
         if (globalSettings == null) {
             globalSettings = locateMavenConf(world).join("settings.xml");
         }
@@ -567,7 +568,7 @@ public class Maven {
         }
         request.setGlobalSettingsFile(globalSettings.toPath().toFile());
         request.setUserSettingsFile(userSettings.toPath().toFile());
-        return builder.buildSettings(request);
+        return builder.build(request).getEffectiveSettings();
     }
 
     private static String localRepositoryPathFromMavenOpts() {
