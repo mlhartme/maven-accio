@@ -18,7 +18,7 @@
 
   <properties>
     <mavenVersion>3.5.4</mavenVersion>
-    <resolverVersion>1.1.0</resolverVersion>
+    <resolverVersion>1.7.3</resolverVersion>
     <wagonVersion>2.10</wagonVersion>
   </properties>
 
