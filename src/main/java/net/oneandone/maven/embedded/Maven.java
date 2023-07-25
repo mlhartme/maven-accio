@@ -275,7 +275,7 @@ public class Maven {
     private final List<ArtifactRepository> remoteLegacy;
 
     // This is the ProjectBuilder used by Maven 3.9.3 to load poms. Note that the respective ProjectBuilderRequest uses
-    // the deprecated ArtifactRepository class, so deprecation warnings are unavailable.
+    // the deprecated org.apache.maven.artifact.repository.ArtifactRepository class, so deprecation warnings are unavailable.
     private final ProjectBuilder builder;
 
     public Maven(World world, RepositorySystem repositorySystem, DefaultRepositorySystemSession repositorySession, ProjectBuilder builder,
