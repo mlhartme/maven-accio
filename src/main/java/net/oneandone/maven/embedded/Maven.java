@@ -363,22 +363,24 @@ public class Maven {
     //-- load poms
 
     public MavenProject loadPom(Artifact artifact) throws RepositoryException, ProjectBuildingException {
-        return loadPom(resolve(new DefaultArtifact(artifact.getGroupId(), artifact.getArtifactId(), "pom", artifact.getVersion())), false);
+        return loadPom(
+                resolve(new DefaultArtifact(artifact.getGroupId(), artifact.getArtifactId(), "pom", artifact.getVersion())),
+                false, false);
     }
 
     public MavenProject loadPom(FileNode file) throws ProjectBuildingException {
         try {
-            return loadPom(file, false);
+            return loadPom(file, true, true);
         } catch (RepositoryException e) {
             throw new IllegalStateException(e);
         }
     }
 
-    public MavenProject loadPom(FileNode file, boolean resolve) throws RepositoryException, ProjectBuildingException {
-        return loadPom(file, resolve, null, null, null);
+    public MavenProject loadPom(FileNode file, boolean resolve, boolean processPlugins) throws RepositoryException, ProjectBuildingException {
+        return loadPom(file, resolve, processPlugins, null, null, null);
     }
 
-    public MavenProject loadPom(FileNode file, boolean resolve, Properties userProperties, List<String> profiles,
+    public MavenProject loadPom(FileNode file, boolean resolve, boolean processPLugins, Properties userProperties, List<String> profiles,
                                 List<Dependency> dependencies) throws RepositoryException, ProjectBuildingException {
         ProjectBuildingRequest request;
         ProjectBuildingResult result;
@@ -387,7 +389,7 @@ public class Maven {
         request = new DefaultProjectBuildingRequest();
         request.setRepositorySession(repositorySession);
         request.setRemoteRepositories(remoteLegacy);
-        request.setProcessPlugins(false);
+        request.setProcessPlugins(processPLugins);
         request.setValidationLevel(ModelBuildingRequest.VALIDATION_LEVEL_MINIMAL);
         request.setSystemProperties(System.getProperties());
         if (userProperties != null) {
