@@ -17,8 +17,12 @@ package net.oneandone.maven.embedded;
 
 import net.oneandone.sushi.fs.World;
 import net.oneandone.sushi.fs.file.FileNode;
+import org.apache.maven.model.Model;
+import org.apache.maven.model.Plugin;
+import org.apache.maven.model.PluginExecution;
 import org.apache.maven.project.MavenProject;
 import org.apache.maven.project.ProjectBuildingException;
+import org.eclipse.aether.RepositoryException;
 import org.eclipse.aether.artifact.DefaultArtifact;
 import org.junit.Test;
 import org.eclipse.aether.artifact.Artifact;
@@ -28,7 +32,9 @@ import org.eclipse.aether.resolution.VersionResolutionException;
 import org.eclipse.aether.version.Version;
 
 import java.io.IOException;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -79,6 +85,32 @@ public class MavenTest {
 
         pom = maven.loadPom(maven.getWorld().guessProjectHome(getClass()).join("pom.xml"));
         assertEquals("embedded", pom.getArtifactId());
+    }
+
+    @Test
+    public void loadPomWithProfiles() throws ProjectBuildingException, RepositoryException {
+        final String myExec = "my-exec maven-surefire-plugin [bla]";
+        final FileNode pomFile = maven.getWorld().guessProjectHome(getClass()).join("src/test/with-profile.pom");
+        MavenProject pom;
+
+        pom = maven.loadPom(pomFile);
+        assertEquals("with-profile", pom.getArtifactId());
+        assertFalse("contains execution from profile", executions(pom.getModel()).keySet().contains(myExec));
+
+        pom = maven.loadPom(pomFile, true, true, null, List.of("with-surefire"), null);
+        assertTrue("contains execution from profile", executions(pom.getModel()).keySet().contains(myExec));
+    }
+
+    private Map<String, Object> executions(Model model) {
+        Map<String, Object> executions;
+
+        executions = new LinkedHashMap<>();
+        for (Plugin p : model.getBuild().getPlugins()) {
+            for (PluginExecution e : p.getExecutions()) {
+                executions.put(e.getId() + " " + p.getArtifactId() + " " + e.getGoals(), "" + e.getConfiguration());
+            }
+        }
+        return executions;
     }
 
     @Test

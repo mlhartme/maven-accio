@@ -274,8 +274,8 @@ public class Maven {
     /** Remote repositories used to load poms. Legacy objects :( */
     private final List<ArtifactRepository> remoteLegacy;
 
-    // TODO: use a project builder that works without legacy classes, esp. without ArtifactRepository ...
-    // As far as I know, there's no such project builder as of mvn 3.0.2.
+    // This is the ProjectBuilder used by Maven 3.9.3 to load poms. Note that the respective ProjectBuilderRequest uses
+    // the deprecated ArtifactRepository class, so deprecation warnings are unavailable.
     private final ProjectBuilder builder;
 
     public Maven(World world, RepositorySystem repositorySystem, DefaultRepositorySystemSession repositorySession, ProjectBuilder builder,
@@ -380,6 +380,10 @@ public class Maven {
         return loadPom(file, resolve, processPlugins, null, null, null);
     }
 
+    /**
+     * @param userProperties may be null
+     * @param profiles specifies profile to explicitly enable, may be null
+     * @param dependencies out argument, receives all dependencies if not null */
     public MavenProject loadPom(FileNode file, boolean resolve, boolean processPLugins, Properties userProperties, List<String> profiles,
                                 List<Dependency> dependencies) throws RepositoryException, ProjectBuildingException {
         ProjectBuildingRequest request;
@@ -405,7 +409,7 @@ public class Maven {
         }
         result = builder.build(file.toPath().toFile(), request);
 
-        // TODO: i've seen these collection errors for a dependency with ranges. Why does Aether NOT throw an exception in this case?
+        // TODO: I've seen these collection errors for a dependency with ranges. Why does Aether NOT throw an exception in this case?
         if (result.getDependencyResolutionResult() != null) {
             problems = result.getDependencyResolutionResult().getCollectionErrors();
             if (problems != null && !problems.isEmpty()) {
