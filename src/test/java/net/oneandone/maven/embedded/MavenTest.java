@@ -15,9 +15,6 @@
  */
 package net.oneandone.maven.embedded;
 
-import net.oneandone.sushi.fs.MkdirException;
-import net.oneandone.sushi.fs.World;
-import net.oneandone.sushi.fs.file.FileNode;
 import org.apache.maven.model.Model;
 import org.apache.maven.model.Plugin;
 import org.apache.maven.model.PluginExecution;
@@ -34,6 +31,7 @@ import org.eclipse.aether.version.Version;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -49,13 +47,11 @@ public class MavenTest {
     private static final Artifact NOT_FOUND = new DefaultArtifact("no.such.group:foo:x");
     private static final Artifact SNAPSHOT = new DefaultArtifact("net.oneandone:pommes:3.4.1-SNAPSHOT");
 
-    private World world;
     private Maven maven;
-    private FileNode home;
+    private File project;
 
     public MavenTest() throws IOException {
-        world = World.create();
-        home = world.guessProjectHome(getClass());
+        project = new File(".").getAbsoluteFile(); // TODO - multi module builds ...
         maven = Maven.withSettings();
     }
 
@@ -83,18 +79,22 @@ public class MavenTest {
 
     //--
 
+    private File file(String path) {
+        return new File(project, path);
+    }
+
     @Test
     public void loadPom() throws ProjectBuildingException {
         MavenProject pom;
 
-        pom = maven.loadPom(home.join("pom.xml").toPath().toFile());
+        pom = maven.loadPom(file("pom.xml"));
         assertEquals("embedded", pom.getArtifactId());
     }
 
     @Test
     public void loadPomWithProfiles() throws ProjectBuildingException, RepositoryException {
         final String myExec = "my-exec maven-surefire-plugin [bla]";
-        final FileNode pomFile = home.join("src/test/with-profile.pom");
+        final File pomFile = file("src/test/with-profile.pom");
         MavenProject pom;
 
         pom = maven.loadPom(pomFile.toPath().toFile());
@@ -108,23 +108,40 @@ public class MavenTest {
     @Test
     public void loadPomWithProfileActivation() throws ProjectBuildingException, RepositoryException, IOException {
         final String myExec = "my-exec maven-surefire-plugin [bla]";
-        final FileNode dir = home.join("target/activation").deleteTreeOpt().mkdirsOpt();
-        final FileNode marker = dir.join("marker");
-        final FileNode pomFile = dir.join("pom.xml");
+        final File dir = file("target/activation");
+        final File marker = new File(dir, "marker");
+        final File pomFile = new File(dir, "pom.xml");
         MavenProject pom;
 
-        home.join("src/test/with-activation.pom").copyFile(pomFile);
+        wipe(dir);
+        Files.copy(file("src/test/with-activation.pom").toPath(), pomFile.toPath());
 
         assertFalse(marker.exists());
         pom = maven.loadPom(pomFile.toPath().toFile());
         assertEquals("with-activation", pom.getArtifactId());
         assertFalse("contains execution from profile", executions(pom.getModel()).keySet().contains(myExec));
 
-        marker.writeString("touch");
+        Files.writeString(marker.toPath(), "touch");
         assertTrue(marker.exists());
         pom = maven.loadPom(pomFile.toPath().toFile());
         assertEquals("with-activation", pom.getArtifactId());
         assertTrue("contains execution from profile", executions(pom.getModel()).keySet().contains(myExec));
+    }
+
+    private void wipe(File dir) {
+        if (dir.isDirectory()) {
+            deleteTree(dir);
+        }
+        dir.mkdirs();
+    }
+
+    private void deleteTree(File dir) {
+        if (dir.isDirectory()) {
+            for (File child : dir.listFiles()) {
+                deleteTree(child);
+            }
+        }
+        dir.delete();
     }
 
     private Map<String, Object> executions(Model model) {
@@ -143,7 +160,7 @@ public class MavenTest {
     public void loadInterpolation() throws Exception {
         MavenProject pom;
 
-        pom = maven.loadPom(home.join("src/test/normal.pom").toPath().toFile());
+        pom = maven.loadPom(file("src/test/normal.pom"));
         assertEquals("normal", pom.getName());
         assertEquals(System.getProperty("user.name"), pom.getArtifactId());
     }

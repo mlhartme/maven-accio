@@ -7,8 +7,8 @@
 
 ### 4.0.0 (pending)
 
-* loadPom now defauls to resolve dependencies and process plugins (previously, plugins were never processed)
-* dump sushi compile dependency
+* loadPom now defaults to resolve dependencies and process plugins (previously, plugins were never processed)
+* dump sushi dependency, work on files instead
 * update Maven 3.3.9 libraries to 3.9.3
 * update plexus-classworlds 2.5.2 to 2.7.0
 * dump Wagon dependency, Maven itself has replaced it
