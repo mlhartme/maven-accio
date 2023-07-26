@@ -9,6 +9,7 @@
 
 * loadPom now defauls to resolve dependencies and process plugins (previously, plugins were never processed)
 * update Maven 3.3.9 libraries to 3.9.3
+* update plexus-classworlds 2.5.2 to 2.7.0
 * dump Wagon dependency, Maven itself has replaced it
 * switch from Aether 1.0.2.xx to Maven Artifact Resolver 1.9.13 (https://maven.apache.org/resolver/)
 * switch from MavenSettingsBuilder to SettingsBuilder (fixes deprecation)
