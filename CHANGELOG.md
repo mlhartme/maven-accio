@@ -8,6 +8,7 @@
 ### 4.0.0 (pending)
 
 * loadPom now defaults to resolve dependencies and process plugins (previously, plugins were never processed)
+* hide internals: removed Maven method getRepositorySystem(), getRepositorySession(), remoteLegacyRepositories() and remoteResolveRepositories()
 * dump sushi dependency, work on files instead
 * update Maven 3.3.9 libraries to 3.9.3
 * update plexus-classworlds 2.5.2 to 2.7.0

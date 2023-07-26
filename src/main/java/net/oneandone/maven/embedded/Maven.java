@@ -291,22 +291,6 @@ public class Maven {
         this.remoteLegacy = remoteLegacy;
     }
 
-    public RepositorySystem getRepositorySystem() {
-        return repositorySystem;
-    }
-
-    public DefaultRepositorySystemSession getRepositorySession() {
-        return repositorySession;
-    }
-
-    public List<ArtifactRepository> remoteLegacyRepositories() {
-        return remoteLegacy;
-    }
-
-    public List<RemoteRepository> remoteResolveRepositories() {
-        return remote;
-    }
-
     public File getLocalRepositoryDir() {
         return repositorySession.getLocalRepository().getBasedir();
     }
