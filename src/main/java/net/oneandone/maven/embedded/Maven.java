@@ -235,12 +235,8 @@ public class Maven {
 
     //--
 
-    public static File userHome() {
-        return new File(System.getProperty("user.home"));
-    }
-
     public static File defaultLocalRepositoryDir() {
-        return new File(userHome(), ".m2/repository");
+        return new File(IO.userHome(), ".m2/repository");
     }
 
     public static DefaultPlexusContainer container() {
@@ -569,7 +565,7 @@ public class Maven {
             globalSettings = new File(locateMavenConf(), "settings.xml");
         }
         if (userSettings == null) {
-            userSettings = new File(userHome(), ".m2/settings.xml");
+            userSettings = new File(IO.userHome(), ".m2/settings.xml");
         }
         request.setGlobalSettingsFile(globalSettings.toPath().toFile());
         request.setUserSettingsFile(userSettings.toPath().toFile());
@@ -603,9 +599,9 @@ public class Maven {
             }
             return conf;
         }
-        mvn = which("mvn");
+        mvn = IO.which("mvn");
         if (mvn != null) {
-            mvn = resolve(mvn);
+            mvn = IO.resolveSymbolicLinks(mvn);
             mvn = mvn.getParentFile().getParentFile();
             conf = new File(mvn, "conf");
             if (conf.isDirectory()) {
@@ -618,26 +614,6 @@ public class Maven {
         }
 
         throw new IOException("cannot locate maven's conf directory - consider settings MAVEN_HOME or adding mvn to your path");
-    }
-
-    private static File which(String cmd) {
-        String path;
-        File file;
-
-        path = System.getenv("PATH");
-        if (path != null) {
-            for (String entry : path.split(":")) {
-                file = new File(entry.trim(), cmd);
-                if (file.isFile()) {
-                    return file;
-                }
-            }
-        }
-        return null;
-    }
-
-    private static File resolve(File originalFile) throws IOException {
-        return originalFile.toPath().toRealPath().toFile();
     }
 
     private static List<ArtifactRepository> repositoriesLegacy(LegacyRepositorySystem legacy, Settings settings)
