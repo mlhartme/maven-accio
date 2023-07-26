@@ -15,6 +15,7 @@
  */
 package net.oneandone.maven.embedded;
 
+import net.oneandone.sushi.fs.MkdirException;
 import net.oneandone.sushi.fs.World;
 import net.oneandone.sushi.fs.file.FileNode;
 import org.apache.maven.model.Model;
@@ -49,9 +50,11 @@ public class MavenTest {
 
     private World world;
     private Maven maven;
+    private FileNode home;
 
     public MavenTest() throws IOException {
         world = World.create();
+        home = world.guessProjectHome(getClass());
         maven = Maven.withSettings(world);
     }
 
@@ -83,14 +86,14 @@ public class MavenTest {
     public void loadPom() throws ProjectBuildingException {
         MavenProject pom;
 
-        pom = maven.loadPom(maven.getWorld().guessProjectHome(getClass()).join("pom.xml"));
+        pom = maven.loadPom(home.join("pom.xml"));
         assertEquals("embedded", pom.getArtifactId());
     }
 
     @Test
     public void loadPomWithProfiles() throws ProjectBuildingException, RepositoryException {
         final String myExec = "my-exec maven-surefire-plugin [bla]";
-        final FileNode pomFile = maven.getWorld().guessProjectHome(getClass()).join("src/test/with-profile.pom");
+        final FileNode pomFile = home.join("src/test/with-profile.pom");
         MavenProject pom;
 
         pom = maven.loadPom(pomFile);
@@ -98,6 +101,28 @@ public class MavenTest {
         assertFalse("contains execution from profile", executions(pom.getModel()).keySet().contains(myExec));
 
         pom = maven.loadPom(pomFile, true, true, null, List.of("with-surefire"), null);
+        assertTrue("contains execution from profile", executions(pom.getModel()).keySet().contains(myExec));
+    }
+
+    @Test
+    public void loadPomWithProfileActivation() throws ProjectBuildingException, RepositoryException, IOException {
+        final String myExec = "my-exec maven-surefire-plugin [bla]";
+        final FileNode dir = home.join("target/activation").deleteTreeOpt().mkdirsOpt();
+        final FileNode marker = dir.join("marker");
+        final FileNode pomFile = dir.join("pom.xml");
+        MavenProject pom;
+
+        home.join("src/test/with-activation.pom").copyFile(pomFile);
+
+        assertFalse(marker.exists());
+        pom = maven.loadPom(pomFile);
+        assertEquals("with-activation", pom.getArtifactId());
+        assertFalse("contains execution from profile", executions(pom.getModel()).keySet().contains(myExec));
+
+        marker.writeString("touch");
+        assertTrue(marker.exists());
+        pom = maven.loadPom(pomFile);
+        assertEquals("with-activation", pom.getArtifactId());
         assertTrue("contains execution from profile", executions(pom.getModel()).keySet().contains(myExec));
     }
 
@@ -117,7 +142,7 @@ public class MavenTest {
     public void loadInterpolation() throws Exception {
         MavenProject pom;
 
-        pom = maven.loadPom(world.guessProjectHome(getClass()).join("src/test/normal.pom"));
+        pom = maven.loadPom(home.join("src/test/normal.pom"));
         assertEquals("normal", pom.getName());
         assertEquals(System.getProperty("user.name"), pom.getArtifactId());
     }
@@ -125,7 +150,7 @@ public class MavenTest {
     //--
 
     @Test
-    public void availableVersions() throws VersionResolutionException, VersionRangeResolutionException {
+    public void availableVersions() throws VersionRangeResolutionException {
         List<Version> versions;
 
         versions = maven.availableVersions(JAR);
