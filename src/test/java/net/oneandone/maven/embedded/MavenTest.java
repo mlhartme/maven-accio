@@ -32,6 +32,7 @@ import org.eclipse.aether.resolution.VersionRangeResolutionException;
 import org.eclipse.aether.resolution.VersionResolutionException;
 import org.eclipse.aether.version.Version;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -55,14 +56,14 @@ public class MavenTest {
     public MavenTest() throws IOException {
         world = World.create();
         home = world.guessProjectHome(getClass());
-        maven = Maven.withSettings(world);
+        maven = Maven.withSettings();
     }
 
     //--
 
     @Test
     public void resolveRelease() throws Exception {
-        maven.resolve(JAR).checkFile();
+        assertTrue(maven.resolve(JAR).isFile());
     }
 
     @Test
@@ -72,12 +73,12 @@ public class MavenTest {
 
     @Test(expected = ArtifactResolutionException.class)
     public void resolveNotFound() throws Exception {
-        maven.resolve(NOT_FOUND).checkFile();
+        maven.resolve(NOT_FOUND);
     }
 
     @Test(expected = ArtifactResolutionException.class)
     public void resolveVersionNotFound() throws Exception {
-        maven.resolve(JAR.setVersion("0.8.15")).checkFile();
+        maven.resolve(JAR.setVersion("0.8.15"));
     }
 
     //--
@@ -86,7 +87,7 @@ public class MavenTest {
     public void loadPom() throws ProjectBuildingException {
         MavenProject pom;
 
-        pom = maven.loadPom(home.join("pom.xml"));
+        pom = maven.loadPom(home.join("pom.xml").toPath().toFile());
         assertEquals("embedded", pom.getArtifactId());
     }
 
@@ -96,11 +97,11 @@ public class MavenTest {
         final FileNode pomFile = home.join("src/test/with-profile.pom");
         MavenProject pom;
 
-        pom = maven.loadPom(pomFile);
+        pom = maven.loadPom(pomFile.toPath().toFile());
         assertEquals("with-profile", pom.getArtifactId());
         assertFalse("contains execution from profile", executions(pom.getModel()).keySet().contains(myExec));
 
-        pom = maven.loadPom(pomFile, true, true, null, List.of("with-surefire"), null);
+        pom = maven.loadPom(pomFile.toPath().toFile(), true, true, null, List.of("with-surefire"), null);
         assertTrue("contains execution from profile", executions(pom.getModel()).keySet().contains(myExec));
     }
 
@@ -115,13 +116,13 @@ public class MavenTest {
         home.join("src/test/with-activation.pom").copyFile(pomFile);
 
         assertFalse(marker.exists());
-        pom = maven.loadPom(pomFile);
+        pom = maven.loadPom(pomFile.toPath().toFile());
         assertEquals("with-activation", pom.getArtifactId());
         assertFalse("contains execution from profile", executions(pom.getModel()).keySet().contains(myExec));
 
         marker.writeString("touch");
         assertTrue(marker.exists());
-        pom = maven.loadPom(pomFile);
+        pom = maven.loadPom(pomFile.toPath().toFile());
         assertEquals("with-activation", pom.getArtifactId());
         assertTrue("contains execution from profile", executions(pom.getModel()).keySet().contains(myExec));
     }
@@ -142,7 +143,7 @@ public class MavenTest {
     public void loadInterpolation() throws Exception {
         MavenProject pom;
 
-        pom = maven.loadPom(home.join("src/test/normal.pom"));
+        pom = maven.loadPom(home.join("src/test/normal.pom").toPath().toFile());
         assertEquals("normal", pom.getName());
         assertEquals(System.getProperty("user.name"), pom.getArtifactId());
     }
@@ -165,22 +166,22 @@ public class MavenTest {
 
         version = maven.latestVersion(SNAPSHOT);
         assertTrue(version, version.startsWith("3.4.1-"));
-        maven.resolve(SNAPSHOT.setVersion(version)).checkFile();
+        assertTrue(maven.resolve(SNAPSHOT.setVersion(version)).isFile());
     }
 
     @Test
     public void latestVersionSnapshot() throws Exception {
         Artifact artifact;
         String latest;
-        FileNode file;
+        File file;
 
         latest = maven.latestVersion(SNAPSHOT);
         assertNotNull(latest);
         assertTrue(latest, latest.startsWith("3.4.1-"));
         artifact = SNAPSHOT.setVersion(latest);
         file = maven.resolve(artifact);
-        file.checkFile();
-        assertTrue(file.size() > 0);
+        assertTrue(file.isFile());
+        assertTrue(file.length() > 0);
         // cannot load poms >controlpanel-wars 1.0-SNAPSHOT>controlpanel 1.0-SNAPSHOT because
         // the last pom is not deployed, not even on billy ...
         //   resolver.loadPom(artifact);
@@ -236,7 +237,13 @@ public class MavenTest {
     //--
 
     @Test
+    public void split() {
+        assertEquals(List.of("a", "b", "", "c"), List.of("a b  c".split(" ")));
+        assertEquals(List.of("ab", "cd ", "", "efg"), List.of("ab:cd ::efg".split(":")));
+    }
+
+    @Test
     public void fromSettings() throws IOException {
-        assertNotNull(Maven.withSettings(world));
+        assertNotNull(Maven.withSettings());
     }
 }

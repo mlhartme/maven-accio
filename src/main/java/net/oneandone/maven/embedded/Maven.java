@@ -15,9 +15,6 @@
  */
 package net.oneandone.maven.embedded;
 
-import net.oneandone.sushi.fs.World;
-import net.oneandone.sushi.fs.file.FileNode;
-import net.oneandone.sushi.util.Separator;
 import org.apache.maven.RepositoryUtils;
 import org.apache.maven.artifact.InvalidRepositoryException;
 import org.apache.maven.artifact.repository.ArtifactRepository;
@@ -97,8 +94,8 @@ import java.util.Properties;
  * * does not setup/use ExecutionEventCatapult/ExecutionListener (Maven does use them for console/log output)
  */
 public class Maven {
-    public static Maven withSettings(World world) throws IOException {
-        return withSettings(world, null, null, null);
+    public static Maven withSettings() throws IOException {
+        return withSettings(null, null, null);
     }
 
     /**
@@ -106,12 +103,12 @@ public class Maven {
      * @param globalSettings null to use default
      * @param userSettings null to use default
      */
-    public static Maven withSettings(World world, FileNode localRepository, FileNode globalSettings, FileNode userSettings)
+    public static Maven withSettings(File localRepository, File globalSettings, File userSettings)
             throws IOException {
-        return withSettings(world, localRepository, globalSettings, userSettings, container(), null, null);
+        return withSettings(localRepository, globalSettings, userSettings, container(), null, null);
     }
 
-    public static Maven withSettings(World world, FileNode localRepository, FileNode globalSettings, FileNode userSettings,
+    public static Maven withSettings(File localRepository, File globalSettings, File userSettings,
                                      DefaultPlexusContainer container,
                                      TransferListener transferListener, RepositoryListener repositoryListener) throws IOException {
         RepositorySystem system;
@@ -122,26 +119,26 @@ public class Maven {
 
         try {
             try {
-                settings = loadSettings(world, globalSettings, userSettings, container);
+                settings = loadSettings(globalSettings, userSettings, container);
             } catch (SettingsBuildingException | XmlPullParserException e) {
                 throw new IOException("cannot load settings: " + e.getMessage(), e);
             }
             system = container.lookup(RepositorySystem.class);
             session = createSession(transferListener, repositoryListener, system,
-                    createLocalRepository(world, localRepository, settings), settings);
+                    createLocalRepository(localRepository, settings), settings);
             legacySystem = (LegacyRepositorySystem) container.lookup(org.apache.maven.repository.RepositorySystem.class, "default");
             repositoriesLegacy = repositoriesLegacy(legacySystem, settings);
             legacySystem.injectAuthentication(session, repositoriesLegacy);
             legacySystem.injectMirror(session, repositoriesLegacy);
             legacySystem.injectProxy(session, repositoriesLegacy);
-            return new Maven(world, system, session, container.lookup(ProjectBuilder.class),
+            return new Maven(system, session, container.lookup(ProjectBuilder.class),
                     RepositoryUtils.toRepos(repositoriesLegacy), repositoriesLegacy);
         } catch (InvalidRepositoryException | ComponentLookupException e) {
             throw new IllegalStateException(e);
         }
     }
 
-    private static LocalRepository createLocalRepository(World world, FileNode localRepository, Settings settings) {
+    private static LocalRepository createLocalRepository(File localRepository, Settings settings) {
         String localRepositoryStr;
         LocalRepository localRepositoryObj;
 
@@ -151,11 +148,11 @@ public class Maven {
             if (localRepositoryStr == null) {
                 localRepositoryStr = localRepositoryPathFromMavenOpts();
                 if (localRepositoryStr == null) {
-                    localRepositoryStr = defaultLocalRepositoryDir(world).toPath().toFile().getAbsolutePath();
+                    localRepositoryStr = defaultLocalRepositoryDir().getAbsolutePath();
                 }
             }
         } else {
-            localRepositoryStr = localRepository.getAbsolute();
+            localRepositoryStr = localRepository.getAbsolutePath();
         }
         localRepositoryObj = new LocalRepository(localRepositoryStr);
         return localRepositoryObj;
@@ -238,8 +235,12 @@ public class Maven {
 
     //--
 
-    public static FileNode defaultLocalRepositoryDir(World world) {
-        return world.file(new File(System.getProperty("user.home"))).join(".m2/repository");
+    public static File userHome() {
+        return new File(System.getProperty("user.home"));
+    }
+
+    public static File defaultLocalRepositoryDir() {
+        return new File(userHome(), ".m2/repository");
     }
 
     public static DefaultPlexusContainer container() {
@@ -270,7 +271,6 @@ public class Maven {
 
     //--
 
-    private final World world;
     private final RepositorySystem repositorySystem;
     private final DefaultRepositorySystemSession repositorySession;
 
@@ -286,18 +286,13 @@ public class Maven {
     // the deprecated org.apache.maven.artifact.repository.ArtifactRepository class, so deprecation warnings are unavailable.
     private final ProjectBuilder builder;
 
-    public Maven(World world, RepositorySystem repositorySystem, DefaultRepositorySystemSession repositorySession, ProjectBuilder builder,
+    public Maven(RepositorySystem repositorySystem, DefaultRepositorySystemSession repositorySession, ProjectBuilder builder,
                  List<RemoteRepository> remote, List<ArtifactRepository> remoteLegacy) {
-        this.world = world;
         this.repositorySystem = repositorySystem;
         this.repositorySession = repositorySession;
         this.builder = builder;
         this.remote = remote;
         this.remoteLegacy = remoteLegacy;
-    }
-
-    public World getWorld() {
-        return world;
     }
 
     public RepositorySystem getRepositorySystem() {
@@ -316,47 +311,43 @@ public class Maven {
         return remote;
     }
 
-    public FileNode getLocalRepositoryDir() {
-        return world.file(repositorySession.getLocalRepository().getBasedir());
+    public File getLocalRepositoryDir() {
+        return repositorySession.getLocalRepository().getBasedir();
     }
 
-    public FileNode getLocalRepositoryFile(Artifact artifact) {
-        return getLocalRepositoryDir().join(repositorySession.getLocalRepositoryManager().getPathForLocalArtifact(artifact));
+    public File getLocalRepositoryFile(Artifact artifact) {
+        return new File(getLocalRepositoryDir(), repositorySession.getLocalRepositoryManager().getPathForLocalArtifact(artifact));
     }
 
-    public List<FileNode> files(List<Artifact> artifacts) {
-        List<FileNode> result;
+    public List<File> files(List<Artifact> artifacts) {
+        List<File> result;
 
         result = new ArrayList<>();
         for (Artifact a : artifacts) {
-            result.add(file(a));
+            result.add(a.getFile());
         }
         return result;
     }
 
-    public FileNode file(Artifact artifact) {
-        return world.file(artifact.getFile());
-    }
-
     //-- resolve
 
-    public FileNode resolve(String groupId, String artifactId, String version) throws ArtifactResolutionException {
+    public File resolve(String groupId, String artifactId, String version) throws ArtifactResolutionException {
         return resolve(groupId, artifactId, "jar", version);
     }
 
-    public FileNode resolve(String groupId, String artifactId, String extension, String version) throws ArtifactResolutionException {
+    public File resolve(String groupId, String artifactId, String extension, String version) throws ArtifactResolutionException {
         return resolve(new DefaultArtifact(groupId, artifactId, extension, version));
     }
 
-    public FileNode resolve(String gav) throws ArtifactResolutionException {
+    public File resolve(String gav) throws ArtifactResolutionException {
         return resolve(new DefaultArtifact(gav));
     }
 
-    public FileNode resolve(Artifact artifact) throws ArtifactResolutionException {
+    public File resolve(Artifact artifact) throws ArtifactResolutionException {
         return resolve(artifact, remote);
     }
 
-    public FileNode resolve(Artifact artifact, List<RemoteRepository> remoteRepositories) throws ArtifactResolutionException {
+    public File resolve(Artifact artifact, List<RemoteRepository> remoteRepositories) throws ArtifactResolutionException {
         ArtifactRequest request;
         ArtifactResult result;
 
@@ -365,7 +356,7 @@ public class Maven {
         if (!result.isResolved()) {
             throw new ArtifactResolutionException(new ArrayList<ArtifactResult>()); // TODO
         }
-        return world.file(result.getArtifact().getFile());
+        return result.getArtifact().getFile();
     }
 
     //-- load poms
@@ -376,7 +367,7 @@ public class Maven {
                 false, false);
     }
 
-    public MavenProject loadPom(FileNode file) throws ProjectBuildingException {
+    public MavenProject loadPom(File file) throws ProjectBuildingException {
         try {
             return loadPom(file, true, true);
         } catch (RepositoryException e) {
@@ -384,7 +375,7 @@ public class Maven {
         }
     }
 
-    public MavenProject loadPom(FileNode file, boolean resolve, boolean processPlugins) throws RepositoryException, ProjectBuildingException {
+    public MavenProject loadPom(File file, boolean resolve, boolean processPlugins) throws RepositoryException, ProjectBuildingException {
         return loadPom(file, resolve, processPlugins, null, null, null);
     }
 
@@ -392,7 +383,7 @@ public class Maven {
      * @param userProperties may be null
      * @param profiles specifies profile to explicitly enable, may be null
      * @param dependencies out argument, receives all dependencies if not null */
-    public MavenProject loadPom(FileNode file, boolean resolve, boolean processPLugins, Properties userProperties, List<String> profiles,
+    public MavenProject loadPom(File file, boolean resolve, boolean processPLugins, Properties userProperties, List<String> profiles,
                                 List<Dependency> dependencies) throws RepositoryException, ProjectBuildingException {
         ProjectBuildingRequest request;
         ProjectBuildingResult result;
@@ -567,7 +558,7 @@ public class Maven {
      * @param globalSettings null to use default
      * @param userSettings null to use default
      */
-    public static Settings loadSettings(World world, FileNode globalSettings, FileNode userSettings, DefaultPlexusContainer container)
+    public static Settings loadSettings(File globalSettings, File userSettings, DefaultPlexusContainer container)
             throws IOException, XmlPullParserException, ComponentLookupException, SettingsBuildingException {
         DefaultSettingsBuilder builder;
         SettingsBuildingRequest request;
@@ -575,10 +566,10 @@ public class Maven {
         builder = (DefaultSettingsBuilder) container.lookup(SettingsBuilder.class);
         request = new DefaultSettingsBuildingRequest();
         if (globalSettings == null) {
-            globalSettings = locateMavenConf(world).join("settings.xml");
+            globalSettings = new File(locateMavenConf(), "settings.xml");
         }
         if (userSettings == null) {
-            userSettings = world.getHome().join(".m2/settings.xml");
+            userSettings = new File(userHome(), ".m2/settings.xml");
         }
         request.setGlobalSettingsFile(globalSettings.toPath().toFile());
         request.setUserSettingsFile(userSettings.toPath().toFile());
@@ -590,7 +581,7 @@ public class Maven {
 
         value = System.getenv("MAVEN_OPTS");
         if (value != null) {
-            for (String entry : Separator.SPACE.split(value)) {
+            for (String entry : value.split(" ")) {
                 if (entry.startsWith("-Dmaven.repo.local=")) {
                     return entry.substring(entry.indexOf('=') + 1);
                 }
@@ -599,30 +590,28 @@ public class Maven {
         return null;
     }
 
-    public static FileNode locateMavenConf(World world) throws IOException {
+    public static File locateMavenConf() throws IOException {
         String home;
-        FileNode mvn;
-        FileNode conf;
+        File mvn;
+        File conf;
 
         home = System.getenv("MAVEN_HOME");
         if (home != null) {
-            return world.file(home).join("conf").checkDirectory();
-        }
-        mvn = which(world, "mvn");
-        if (mvn != null) {
-            int count = 0;
-            while (mvn.isLink()) {
-                mvn = mvn.resolveLink();
-                if (++count > 5) {
-                    throw new IOException("cannot locate maven: too many symlinks: " + mvn.getAbsolute());
-                }
+            conf = new File(home, "conf");
+            if (!conf.isDirectory()) {
+                throw new IOException("MAVEN_HOME does not contain a conf directory: " + conf);
             }
-            mvn = mvn.getParent().getParent();
-            conf = mvn.join("conf");
+            return conf;
+        }
+        mvn = which("mvn");
+        if (mvn != null) {
+            mvn = resolve(mvn);
+            mvn = mvn.getParentFile().getParentFile();
+            conf = new File(mvn, "conf");
             if (conf.isDirectory()) {
                 return conf;
             }
-            conf = mvn.join("libexec/conf");
+            conf = new File(mvn, "libexec/conf");
             if (conf.isDirectory()) {
                 return conf;
             }
@@ -631,24 +620,24 @@ public class Maven {
         throw new IOException("cannot locate maven's conf directory - consider settings MAVEN_HOME or adding mvn to your path");
     }
 
-    // TODO: sushi
-    private static FileNode which(World world, String cmd) throws IOException {
+    private static File which(String cmd) {
         String path;
-        FileNode file;
+        File file;
 
         path = System.getenv("PATH");
         if (path != null) {
-            for (String entry : Separator.on(':').trim().split(path)) {
-                file = world.file(entry).join(cmd);
+            for (String entry : path.split(":")) {
+                file = new File(entry.trim(), cmd);
                 if (file.isFile()) {
-                    while (file.isLink()) {
-                        file = (FileNode) file.resolveLink();
-                    }
                     return file;
                 }
             }
         }
         return null;
+    }
+
+    private static File resolve(File originalFile) throws IOException {
+        return originalFile.toPath().toRealPath().toFile();
     }
 
     private static List<ArtifactRepository> repositoriesLegacy(LegacyRepositorySystem legacy, Settings settings)
