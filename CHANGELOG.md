@@ -8,6 +8,7 @@
 
 ### 4.0.0 (pending)
 
+* renamed to Maven Accio
 * loadPom now defaults to resolve dependencies and process plugins (previously, plugins were never processed)
 * hide internals: removed Maven method getRepositorySystem(), getRepositorySession(), remoteLegacyRepositories() and remoteResolveRepositories()
 * dump sushi dependency, work on files instead
