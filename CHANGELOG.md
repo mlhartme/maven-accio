@@ -119,4 +119,4 @@
 
 
 
-(see https://github.com/mlhartme/maven-embedded/blob/embedded-3.8.0/src/changes/changes.xml for older logs)
+(see https://github.com/mlhartme/maven-accio/blob/embedded-3.8.0/src/changes/changes.xml for older logs)

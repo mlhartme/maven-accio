@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package net.oneandone.maven.embedded;
+package net.oneandone.maven.accio;
 
 import org.apache.maven.model.Model;
 import org.apache.maven.model.Plugin;
@@ -88,7 +88,7 @@ public class MavenTest {
         MavenProject pom;
 
         pom = maven.loadPom(file("pom.xml"));
-        assertEquals("embedded", pom.getArtifactId());
+        assertEquals("accio", pom.getArtifactId());
     }
 
     @Test
