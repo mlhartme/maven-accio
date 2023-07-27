@@ -58,6 +58,8 @@ public class Maven {
         return new Maven(Config.withSettings());
     }
 
+    //--
+
     private final RepositorySystem repositorySystem;
     private final DefaultRepositorySystemSession repositorySession;
 
@@ -81,22 +83,14 @@ public class Maven {
         this.remoteLegacy = config.remoteLegacy();
     }
 
+    //--
+
     public File getLocalRepositoryDir() {
         return repositorySession.getLocalRepository().getBasedir();
     }
 
     public File getLocalRepositoryFile(Artifact artifact) {
         return new File(getLocalRepositoryDir(), repositorySession.getLocalRepositoryManager().getPathForLocalArtifact(artifact));
-    }
-
-    public List<File> files(List<Artifact> artifacts) {
-        List<File> result;
-
-        result = new ArrayList<>();
-        for (Artifact a : artifacts) {
-            result.add(a.getFile());
-        }
-        return result;
     }
 
     //-- resolve
@@ -132,21 +126,19 @@ public class Maven {
     //-- load poms
 
     public MavenProject loadPom(Artifact artifact) throws RepositoryException, ProjectBuildingException {
-        return loadPom(
-                resolve(new DefaultArtifact(artifact.getGroupId(), artifact.getArtifactId(), "pom", artifact.getVersion())),
-                false, false);
+        return loadPom(resolve(new DefaultArtifact(artifact.getGroupId(), artifact.getArtifactId(), "pom", artifact.getVersion())));
     }
 
     public MavenProject loadPom(File file) throws ProjectBuildingException {
         try {
-            return loadPom(file, true, true);
+            return loadPom(file, true);
         } catch (RepositoryException e) {
             throw new IllegalStateException(e);
         }
     }
 
-    public MavenProject loadPom(File file, boolean resolve, boolean processPlugins) throws RepositoryException, ProjectBuildingException {
-        return loadPom(file, resolve, processPlugins, null, null, null);
+    public MavenProject loadPom(File file, boolean resolve) throws RepositoryException, ProjectBuildingException {
+        return loadPom(file, resolve, resolve, null, null, null);
     }
 
     /**
