@@ -2,7 +2,8 @@
 
 ### TODO
 
-* dump compat dependency, i.e. get rid of LegacyRepositorySystem
+* find a better name for the project
+* dump compat dependency when Maven's (Dwfault)ProjectBuilderRequest removed ArtifactRepository from it's ProjectBuilderingRequest.
 
 
 ### 4.0.0 (pending)
