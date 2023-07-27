@@ -45,14 +45,20 @@ public class MavenTest {
     private static final Artifact JAR = new DefaultArtifact("net.oneandone:sushi:2.8.16");
     private static final Artifact WAR = new DefaultArtifact("wicket:wicket-quickstart:war:x");
     private static final Artifact NOT_FOUND = new DefaultArtifact("no.such.group:foo:x");
-    private static final Artifact SNAPSHOT = new DefaultArtifact("net.oneandone:pommes:3.4.1-SNAPSHOT");
+
+    private static final Artifact MAVEN_PARENT = new DefaultArtifact("de.schmizzolin.maven.poms:parent:pom:1.6.1-SNAPSHOT");
 
     private Maven maven;
+    private File repo;
     private File project;
 
     public MavenTest() throws IOException {
         project = new File(".").getAbsoluteFile(); // TODO - multi module builds ...
-        maven = Maven.create();
+        repo = new File(project, "target/repo");
+        if (!repo.exists()) {
+            repo.mkdirs();
+        }
+        maven = new Maven(Config.create(repo, null, null));
     }
 
     //--
@@ -64,7 +70,7 @@ public class MavenTest {
 
     @Test
     public void resolveSnapshot() throws Exception {
-        maven.resolve(SNAPSHOT);
+        maven.resolve(MAVEN_PARENT);
     }
 
     @Test(expected = ArtifactResolutionException.class)
@@ -181,9 +187,9 @@ public class MavenTest {
             throws VersionResolutionException, VersionRangeResolutionException, ArtifactResolutionException, IOException {
         String version;
 
-        version = maven.latestVersion(SNAPSHOT);
+        version = maven.latestVersion(MAVEN_PARENT);
         assertTrue(version, version.startsWith("3.4.1-"));
-        assertTrue(maven.resolve(SNAPSHOT.setVersion(version)).isFile());
+        assertTrue(maven.resolve(MAVEN_PARENT.setVersion(version)).isFile());
     }
 
     @Test
@@ -192,10 +198,10 @@ public class MavenTest {
         String latest;
         File file;
 
-        latest = maven.latestVersion(SNAPSHOT);
+        latest = maven.latestVersion(MAVEN_PARENT);
         assertNotNull(latest);
         assertTrue(latest, latest.startsWith("3.4.1-"));
-        artifact = SNAPSHOT.setVersion(latest);
+        artifact = MAVEN_PARENT.setVersion(latest);
         file = maven.resolve(artifact);
         assertTrue(file.isFile());
         assertTrue(file.length() > 0);
@@ -225,9 +231,9 @@ public class MavenTest {
     public void nextVersionSnapshotCP() throws Exception {
         String str;
 
-        str = maven.nextVersion(SNAPSHOT);
+        str = maven.nextVersion(MAVEN_PARENT);
         assertTrue(str, str.startsWith("3.4.1-"));
-        assertEquals(str, maven.nextVersion(SNAPSHOT.setVersion(str)));
+        assertEquals(str, maven.nextVersion(MAVEN_PARENT.setVersion(str)));
     }
 
     @Test
@@ -235,9 +241,9 @@ public class MavenTest {
         String snapshot = "3.0.0-20140310.130027-1";
         String str;
 
-        str = maven.nextVersion(SNAPSHOT.setVersion(snapshot));
+        str = maven.nextVersion(MAVEN_PARENT.setVersion(snapshot));
         assertFalse(str, snapshot.equals(str));
-        assertEquals(str, maven.nextVersion(SNAPSHOT.setVersion(str)));
+        assertEquals(str, maven.nextVersion(MAVEN_PARENT.setVersion(str)));
         assertTrue(str, str.startsWith("3.0.0-"));
     }
 

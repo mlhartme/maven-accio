@@ -55,7 +55,7 @@ import java.util.Properties;
 
 public class Maven {
     public static Maven create() throws IOException {
-        return new Maven(Config.withSettings());
+        return new Maven(Config.create());
     }
 
     //--

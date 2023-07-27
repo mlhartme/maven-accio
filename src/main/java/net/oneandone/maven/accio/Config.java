@@ -60,8 +60,8 @@ import java.util.List;
 
 public record Config(RepositorySystem repositorySystem, DefaultRepositorySystemSession repositorySession, ProjectBuilder builder,
                      List<RemoteRepository> remote, List<ArtifactRepository> remoteLegacy) {
-    public static Config withSettings() throws IOException {
-        return withSettings(null, null, null);
+    public static Config create() throws IOException {
+        return create(null, null, null);
     }
 
     /**
@@ -69,14 +69,14 @@ public record Config(RepositorySystem repositorySystem, DefaultRepositorySystemS
      * @param globalSettings null to use default
      * @param userSettings null to use default
      */
-    public static Config withSettings(File localRepository, File globalSettings, File userSettings)
+    public static Config create(File localRepository, File globalSettings, File userSettings)
             throws IOException {
-        return withSettings(localRepository, globalSettings, userSettings, container(), null, null);
+        return create(localRepository, globalSettings, userSettings, container(), null, null);
     }
 
-    public static Config withSettings(File localRepository, File globalSettings, File userSettings,
-                                      DefaultPlexusContainer container,
-                                      TransferListener transferListener, RepositoryListener repositoryListener) throws IOException {
+    public static Config create(File localRepository, File globalSettings, File userSettings,
+                                DefaultPlexusContainer container,
+                                TransferListener transferListener, RepositoryListener repositoryListener) throws IOException {
         RepositorySystem system;
         DefaultRepositorySystemSession session;
         Settings settings;
