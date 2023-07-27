@@ -15,8 +15,6 @@
  */
 package net.oneandone.maven.embedded;
 
-import org.apache.maven.RepositoryUtils;
-import org.apache.maven.artifact.InvalidRepositoryException;
 import org.apache.maven.artifact.repository.ArtifactRepository;
 import org.apache.maven.artifact.repository.metadata.GroupRepositoryMetadata;
 import org.apache.maven.artifact.repository.metadata.MetadataBridge;
@@ -27,30 +25,8 @@ import org.apache.maven.project.ProjectBuilder;
 import org.apache.maven.project.ProjectBuildingException;
 import org.apache.maven.project.ProjectBuildingRequest;
 import org.apache.maven.project.ProjectBuildingResult;
-import org.apache.maven.repository.internal.MavenRepositorySystemUtils;
-import org.apache.maven.repository.legacy.LegacyRepositorySystem;
-import org.apache.maven.settings.Mirror;
-import org.apache.maven.settings.Profile;
-import org.apache.maven.settings.Server;
-import org.apache.maven.settings.Settings;
-import org.apache.maven.settings.SettingsUtils;
-import org.apache.maven.settings.building.DefaultSettingsBuilder;
-import org.apache.maven.settings.building.DefaultSettingsBuildingRequest;
-import org.apache.maven.settings.building.SettingsBuilder;
-import org.apache.maven.settings.building.SettingsBuildingException;
-import org.apache.maven.settings.building.SettingsBuildingRequest;
-import org.codehaus.plexus.DefaultContainerConfiguration;
-import org.codehaus.plexus.DefaultPlexusContainer;
-import org.codehaus.plexus.PlexusConstants;
-import org.codehaus.plexus.PlexusContainerException;
-import org.codehaus.plexus.classworlds.ClassWorld;
-import org.codehaus.plexus.classworlds.realm.ClassRealm;
-import org.codehaus.plexus.component.repository.exception.ComponentLookupException;
-import org.codehaus.plexus.logging.Logger;
-import org.codehaus.plexus.util.xml.pull.XmlPullParserException;
 import org.eclipse.aether.DefaultRepositorySystemSession;
 import org.eclipse.aether.RepositoryException;
-import org.eclipse.aether.RepositoryListener;
 import org.eclipse.aether.RepositorySystem;
 import org.eclipse.aether.artifact.Artifact;
 import org.eclipse.aether.artifact.ArtifactType;
@@ -58,10 +34,6 @@ import org.eclipse.aether.artifact.DefaultArtifact;
 import org.eclipse.aether.deployment.DeployRequest;
 import org.eclipse.aether.deployment.DeploymentException;
 import org.eclipse.aether.graph.Dependency;
-import org.eclipse.aether.repository.Authentication;
-import org.eclipse.aether.repository.AuthenticationSelector;
-import org.eclipse.aether.repository.LocalRepository;
-import org.eclipse.aether.repository.ProxySelector;
 import org.eclipse.aether.repository.RemoteRepository;
 import org.eclipse.aether.resolution.ArtifactRequest;
 import org.eclipse.aether.resolution.ArtifactResolutionException;
@@ -72,10 +44,6 @@ import org.eclipse.aether.resolution.VersionRangeResult;
 import org.eclipse.aether.resolution.VersionRequest;
 import org.eclipse.aether.resolution.VersionResolutionException;
 import org.eclipse.aether.resolution.VersionResult;
-import org.eclipse.aether.transfer.TransferListener;
-import org.eclipse.aether.util.repository.AuthenticationBuilder;
-import org.eclipse.aether.util.repository.DefaultMirrorSelector;
-import org.eclipse.aether.util.repository.DefaultProxySelector;
 import org.eclipse.aether.version.Version;
 
 import java.io.File;
@@ -94,178 +62,9 @@ import java.util.Properties;
  * * does not setup/use ExecutionEventCatapult/ExecutionListener (Maven does use them for console/log output)
  */
 public class Maven {
-    public static Maven withSettings() throws IOException {
-        return withSettings(null, null, null);
+    public static Maven create() throws IOException {
+        return new Maven(Config.withSettings());
     }
-
-    /**
-     * @param localRepository null to use default
-     * @param globalSettings null to use default
-     * @param userSettings null to use default
-     */
-    public static Maven withSettings(File localRepository, File globalSettings, File userSettings)
-            throws IOException {
-        return withSettings(localRepository, globalSettings, userSettings, container(), null, null);
-    }
-
-    public static Maven withSettings(File localRepository, File globalSettings, File userSettings,
-                                     DefaultPlexusContainer container,
-                                     TransferListener transferListener, RepositoryListener repositoryListener) throws IOException {
-        RepositorySystem system;
-        DefaultRepositorySystemSession session;
-        Settings settings;
-        LegacyRepositorySystem legacySystem;
-        List<ArtifactRepository> repositoriesLegacy;
-
-        try {
-            try {
-                settings = loadSettings(globalSettings, userSettings, container);
-            } catch (SettingsBuildingException | XmlPullParserException e) {
-                throw new IOException("cannot load settings: " + e.getMessage(), e);
-            }
-            system = container.lookup(RepositorySystem.class);
-            session = createSession(transferListener, repositoryListener, system,
-                    createLocalRepository(localRepository, settings), settings);
-            legacySystem = (LegacyRepositorySystem) container.lookup(org.apache.maven.repository.RepositorySystem.class, "default");
-            repositoriesLegacy = repositoriesLegacy(legacySystem, settings);
-            legacySystem.injectAuthentication(session, repositoriesLegacy);
-            legacySystem.injectMirror(session, repositoriesLegacy);
-            legacySystem.injectProxy(session, repositoriesLegacy);
-            return new Maven(system, session, container.lookup(ProjectBuilder.class),
-                    RepositoryUtils.toRepos(repositoriesLegacy), repositoriesLegacy);
-        } catch (InvalidRepositoryException | ComponentLookupException e) {
-            throw new IllegalStateException(e);
-        }
-    }
-
-    private static LocalRepository createLocalRepository(File localRepository, Settings settings) {
-        String localRepositoryStr;
-        LocalRepository localRepositoryObj;
-
-        if (localRepository == null) {
-            // TODO: who has precedence: repodir from settings or from MAVEN_OPTS
-            localRepositoryStr = settings.getLocalRepository();
-            if (localRepositoryStr == null) {
-                localRepositoryStr = localRepositoryPathFromMavenOpts();
-                if (localRepositoryStr == null) {
-                    localRepositoryStr = defaultLocalRepositoryDir().getAbsolutePath();
-                }
-            }
-        } else {
-            localRepositoryStr = localRepository.getAbsolutePath();
-        }
-        localRepositoryObj = new LocalRepository(localRepositoryStr);
-        return localRepositoryObj;
-    }
-
-    private static DefaultRepositorySystemSession createSession(TransferListener transferListener, RepositoryListener repositoryListener,
-                                                              RepositorySystem system, LocalRepository localRepository, Settings settings) {
-        DefaultRepositorySystemSession session;
-        final List<Server> servers;
-
-        servers = settings.getServers();
-        session = MavenRepositorySystemUtils.newSession();
-        session.setAuthenticationSelector(new AuthenticationSelector() {
-            @Override
-            public Authentication getAuthentication(RemoteRepository repository) {
-                Server server;
-
-                server = lookup(repository.getId());
-                if (server != null) {
-                    if (server.getPassphrase() != null) {
-                        throw new UnsupportedOperationException();
-                    }
-                    if (server.getPrivateKey() != null) {
-                        throw new UnsupportedOperationException();
-                    }
-                    if (server.getUsername() != null) {
-                        if (server.getPassword() == null) {
-                            throw new IllegalStateException("missing password");
-                        }
-                        return new AuthenticationBuilder().addUsername(server.getUsername()).addPassword(server.getPassword()).build();
-                    }
-                }
-                return null;
-            }
-
-            private Server lookup(String id) {
-                for (Server server : servers) {
-                    if (id.equals(server.getId())) {
-                        return server;
-                    }
-                }
-                return null;
-            }
-
-
-        });
-        if (repositoryListener != null) {
-            session.setRepositoryListener(repositoryListener);
-        }
-        if (transferListener != null) {
-            session.setTransferListener(transferListener);
-        }
-        session.setOffline(settings.isOffline());
-        session.setLocalRepositoryManager(system.newLocalRepositoryManager(session, localRepository));
-        DefaultMirrorSelector mirrorSelector = new DefaultMirrorSelector();
-        for (Mirror mirror : settings.getMirrors()) {
-            mirrorSelector.add(mirror.getId(), mirror.getUrl(), mirror.getLayout(), false, false, mirror.getMirrorOf(),
-                               mirror.getMirrorOfLayouts());
-        }
-        session.setMirrorSelector(mirrorSelector);
-        session.setProxySelector(getProxySelector(settings));
-        return session;
-    }
-
-    private static ProxySelector getProxySelector(Settings settings) {
-        DefaultProxySelector selector;
-        AuthenticationBuilder builder;
-
-        selector = new DefaultProxySelector();
-        for (org.apache.maven.settings.Proxy proxy : settings.getProxies()) {
-            builder = new AuthenticationBuilder();
-            builder.addUsername(proxy.getUsername()).addPassword(proxy.getPassword());
-            selector.add(new org.eclipse.aether.repository.Proxy(proxy.getProtocol(), proxy.getHost(),
-                    proxy.getPort(), builder.build()),
-                    proxy.getNonProxyHosts());
-        }
-
-        return selector;
-    }
-
-    //--
-
-    public static File defaultLocalRepositoryDir() {
-        return new File(IO.userHome(), ".m2/repository");
-    }
-
-    public static DefaultPlexusContainer container() {
-        return container(null, null, Logger.LEVEL_DISABLED);
-    }
-
-    public static DefaultPlexusContainer container(ClassWorld classWorld, ClassRealm realm, int loglevel) {
-        DefaultContainerConfiguration config;
-        DefaultPlexusContainer container;
-
-        config = new DefaultContainerConfiguration();
-        if (classWorld != null) {
-            config.setClassWorld(classWorld);
-        }
-        if (realm != null) {
-            config.setRealm(realm);
-        }
-        config.setAutoWiring(true);
-        config.setClassPathScanning(PlexusConstants.SCANNING_INDEX);
-        try {
-            container = new DefaultPlexusContainer(config);
-        } catch (PlexusContainerException e) {
-            throw new IllegalStateException(e);
-        }
-        container.getLoggerManager().setThreshold(loglevel);
-        return container;
-    }
-
-    //--
 
     private final RepositorySystem repositorySystem;
     private final DefaultRepositorySystemSession repositorySession;
@@ -282,13 +81,12 @@ public class Maven {
     // the deprecated org.apache.maven.artifact.repository.ArtifactRepository class, so deprecation warnings are unavailable.
     private final ProjectBuilder builder;
 
-    public Maven(RepositorySystem repositorySystem, DefaultRepositorySystemSession repositorySession, ProjectBuilder builder,
-                 List<RemoteRepository> remote, List<ArtifactRepository> remoteLegacy) {
-        this.repositorySystem = repositorySystem;
-        this.repositorySession = repositorySession;
-        this.builder = builder;
-        this.remote = remote;
-        this.remoteLegacy = remoteLegacy;
+    public Maven(Config config) {
+        this.repositorySystem = config.repositorySystem();
+        this.repositorySession = config.repositorySession();
+        this.builder = config.builder();
+        this.remote = config.remote();
+        this.remoteLegacy = config.remoteLegacy();
     }
 
     public File getLocalRepositoryDir() {
@@ -530,105 +328,5 @@ public class Maven {
         } else {
             return artifactId.replaceAll("-?maven-?", "").replaceAll("-?plugin-?", "");
         }
-    }
-
-    //-- utils
-
-    /**
-     * @param globalSettings null to use default
-     * @param userSettings null to use default
-     */
-    public static Settings loadSettings(File globalSettings, File userSettings, DefaultPlexusContainer container)
-            throws IOException, XmlPullParserException, ComponentLookupException, SettingsBuildingException {
-        DefaultSettingsBuilder builder;
-        SettingsBuildingRequest request;
-
-        builder = (DefaultSettingsBuilder) container.lookup(SettingsBuilder.class);
-        request = new DefaultSettingsBuildingRequest();
-        if (globalSettings == null) {
-            globalSettings = new File(locateMavenConf(), "settings.xml");
-        }
-        if (userSettings == null) {
-            userSettings = new File(IO.userHome(), ".m2/settings.xml");
-        }
-        request.setGlobalSettingsFile(globalSettings.toPath().toFile());
-        request.setUserSettingsFile(userSettings.toPath().toFile());
-        return builder.build(request).getEffectiveSettings();
-    }
-
-    private static String localRepositoryPathFromMavenOpts() {
-        String value;
-
-        value = System.getenv("MAVEN_OPTS");
-        if (value != null) {
-            for (String entry : value.split(" ")) {
-                if (entry.startsWith("-Dmaven.repo.local=")) {
-                    return entry.substring(entry.indexOf('=') + 1);
-                }
-            }
-        }
-        return null;
-    }
-
-    public static File locateMavenConf() throws IOException {
-        String home;
-        File mvn;
-        File conf;
-
-        home = System.getenv("MAVEN_HOME");
-        if (home != null) {
-            conf = new File(home, "conf");
-            if (!conf.isDirectory()) {
-                throw new IOException("MAVEN_HOME does not contain a conf directory: " + conf);
-            }
-            return conf;
-        }
-        mvn = IO.which("mvn");
-        if (mvn != null) {
-            mvn = IO.resolveSymbolicLinks(mvn);
-            mvn = mvn.getParentFile().getParentFile();
-            conf = new File(mvn, "conf");
-            if (conf.isDirectory()) {
-                return conf;
-            }
-            conf = new File(mvn, "libexec/conf");
-            if (conf.isDirectory()) {
-                return conf;
-            }
-        }
-
-        throw new IOException("cannot locate maven's conf directory - consider settings MAVEN_HOME or adding mvn to your path");
-    }
-
-    private static List<ArtifactRepository> repositoriesLegacy(LegacyRepositorySystem legacy, Settings settings)
-            throws InvalidRepositoryException {
-        boolean central;
-        List<ArtifactRepository> result;
-        List<String> actives;
-        ArtifactRepository artifactRepository;
-
-        central = false;
-        result = new ArrayList<>();
-        actives = settings.getActiveProfiles();
-        for (Profile profile : settings.getProfiles()) {
-            if (actives.contains(profile.getId()) || (profile.getActivation() != null && profile.getActivation().isActiveByDefault())) {
-                for (org.apache.maven.model.Repository repository : SettingsUtils.convertFromSettingsProfile(profile).getRepositories()) {
-                    artifactRepository = legacy.buildArtifactRepository(repository);
-                    if ("central".equals(artifactRepository.getId())) {
-                        central = true;
-                    }
-                    result.add(artifactRepository);
-                }
-            }
-        }
-        if (!central) {
-            /* Maven defines the default central repository in its master parent - and not in the default settings, which I'd prefer.
-               As a consequent, central is not always defined when loading the settings.
-               I first added central to repositories only, because legacy repositories are used to load poms which ultimatly load the
-               master parent with it's repository definition. However, the parent might have to be loaded from central, so repositories
-               also need a central definition. */
-            result.add(legacy.createDefaultRemoteRepository());
-        }
-        return result;
     }
 }

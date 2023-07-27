@@ -52,7 +52,7 @@ public class MavenTest {
 
     public MavenTest() throws IOException {
         project = new File(".").getAbsoluteFile(); // TODO - multi module builds ...
-        maven = Maven.withSettings();
+        maven = Maven.create();
     }
 
     //--
@@ -261,6 +261,6 @@ public class MavenTest {
 
     @Test
     public void fromSettings() throws IOException {
-        assertNotNull(Maven.withSettings());
+        assertNotNull(Maven.create());
     }
 }
