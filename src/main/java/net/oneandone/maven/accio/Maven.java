@@ -276,13 +276,11 @@ public class Maven {
         deploy(target, pluginName, Arrays.asList(artifacts));
     }
 
-    // CHECKSTYLE:OFF
     /**
      * You'll usually pass one jar artifact and the corresponding pom artifact.
      * @param pluginName null if you deploy normal artifacts; none-null for Maven Plugins, that you wish to add a plugin mapping for;
      *                   specifies the plugin name in this case.
      */
-    // CHECKSTYLE:ON
     public void deploy(RemoteRepository target, String pluginName, List<Artifact> artifacts) throws DeploymentException {
         DeployRequest request;
         GroupRepositoryMetadata gm;
