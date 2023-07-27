@@ -42,6 +42,17 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 public class MavenTest {
+    // run this with -Xmx32m to check for memory leaks
+    public static void main(String[] args) throws IOException, ProjectBuildingException {
+        for (int i = 0; i < 10000; i++) {
+            try (Maven maven = new Maven(Config.create())) {
+                MavenProject pom;
+                pom = maven.loadPom(new File("pom.xml"));
+                System.out.println(i + " " + pom.getArtifact());
+            }
+        }
+    }
+
     private static final Artifact JAR = new DefaultArtifact("net.oneandone:sushi:2.8.16");
     private static final Artifact WAR = new DefaultArtifact("wicket:wicket-quickstart:war:x");
     private static final Artifact NOT_FOUND = new DefaultArtifact("no.such.group:foo:x");

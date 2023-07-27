@@ -25,6 +25,7 @@ import org.apache.maven.project.ProjectBuilder;
 import org.apache.maven.project.ProjectBuildingException;
 import org.apache.maven.project.ProjectBuildingRequest;
 import org.apache.maven.project.ProjectBuildingResult;
+import org.codehaus.plexus.PlexusContainer;
 import org.eclipse.aether.DefaultRepositorySystemSession;
 import org.eclipse.aether.RepositoryException;
 import org.eclipse.aether.RepositorySystem;
@@ -53,13 +54,14 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Properties;
 
-public class Maven {
+public class Maven implements AutoCloseable {
     public static Maven create() throws IOException {
         return new Maven(Config.create());
     }
 
     //--
 
+    private final PlexusContainer container;
     private final RepositorySystem repositorySystem;
     private final DefaultRepositorySystemSession repositorySession;
 
@@ -76,6 +78,7 @@ public class Maven {
     private final ProjectBuilder builder;
 
     public Maven(Config config) {
+        this.container = config.container();
         this.repositorySystem = config.repositorySystem();
         this.repositorySession = config.repositorySession();
         this.builder = config.builder();
@@ -310,5 +313,10 @@ public class Maven {
         } else {
             return artifactId.replaceAll("-?maven-?", "").replaceAll("-?plugin-?", "");
         }
+    }
+
+    @Override
+    public void close() {
+       container.dispose();
     }
 }

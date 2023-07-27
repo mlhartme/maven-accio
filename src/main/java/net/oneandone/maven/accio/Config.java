@@ -34,6 +34,7 @@ import org.apache.maven.settings.building.SettingsBuildingRequest;
 import org.codehaus.plexus.DefaultContainerConfiguration;
 import org.codehaus.plexus.DefaultPlexusContainer;
 import org.codehaus.plexus.PlexusConstants;
+import org.codehaus.plexus.PlexusContainer;
 import org.codehaus.plexus.PlexusContainerException;
 import org.codehaus.plexus.classworlds.ClassWorld;
 import org.codehaus.plexus.classworlds.realm.ClassRealm;
@@ -58,7 +59,8 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-public record Config(RepositorySystem repositorySystem, DefaultRepositorySystemSession repositorySession, ProjectBuilder builder,
+public record Config(PlexusContainer container,
+                     RepositorySystem repositorySystem, DefaultRepositorySystemSession repositorySession, ProjectBuilder builder,
                      List<RemoteRepository> remote, List<ArtifactRepository> remoteLegacy) {
     public static Config create() throws IOException {
         return create(null, null, null);
@@ -71,7 +73,7 @@ public record Config(RepositorySystem repositorySystem, DefaultRepositorySystemS
      */
     public static Config create(File localRepository, File globalSettings, File userSettings)
             throws IOException {
-        return create(localRepository, globalSettings, userSettings, container(), null, null);
+        return create(localRepository, globalSettings, userSettings, createContainer(), null, null);
     }
 
     public static Config create(File localRepository, File globalSettings, File userSettings,
@@ -97,7 +99,7 @@ public record Config(RepositorySystem repositorySystem, DefaultRepositorySystemS
             legacySystem.injectAuthentication(session, repositoriesLegacy);
             legacySystem.injectMirror(session, repositoriesLegacy);
             legacySystem.injectProxy(session, repositoriesLegacy);
-            return new Config(system, session, container.lookup(ProjectBuilder.class),
+            return new Config(container, system, session, container.lookup(ProjectBuilder.class),
                     RepositoryUtils.toRepos(repositoriesLegacy), repositoriesLegacy);
         } catch (InvalidRepositoryException | ComponentLookupException e) {
             throw new IllegalStateException(e);
@@ -205,11 +207,11 @@ public record Config(RepositorySystem repositorySystem, DefaultRepositorySystemS
         return new File(IO.userHome(), ".m2/repository");
     }
 
-    public static DefaultPlexusContainer container() {
-        return container(null, null, Logger.LEVEL_DISABLED);
+    public static DefaultPlexusContainer createContainer() {
+        return createContainer(null, null, Logger.LEVEL_DISABLED);
     }
 
-    public static DefaultPlexusContainer container(ClassWorld classWorld, ClassRealm realm, int loglevel) {
+    public static DefaultPlexusContainer createContainer(ClassWorld classWorld, ClassRealm realm, int loglevel) {
         DefaultContainerConfiguration config;
         DefaultPlexusContainer container;
 
