@@ -53,14 +53,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Properties;
 
-/**
- * Notes:
- * * does not load Maven extensions, neither core nor plugin nor build extensions
- *   (Maven does so in DefaultMaven
- *   https://github.com/apache/maven/blob/21122926829f1ead511c958d89bd2f672198ae9f/maven-core/src/main/java/org/apache/maven/DefaultMaven.java#L327C5-L327C5)
- * * does not setup/use EventSpyDispatcher/EventSpy, so the respective events are not fired/processed (Maven uses this for plugin validation)
- * * does not setup/use ExecutionEventCatapult/ExecutionListener (Maven does use them for console/log output)
- */
 public class Maven {
     public static Maven create() throws IOException {
         return new Maven(Config.withSettings());
