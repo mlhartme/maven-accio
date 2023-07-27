@@ -46,7 +46,9 @@ public class MavenTest {
     private static final Artifact WAR = new DefaultArtifact("wicket:wicket-quickstart:war:x");
     private static final Artifact NOT_FOUND = new DefaultArtifact("no.such.group:foo:x");
 
-    private static final Artifact MAVEN_PARENT = new DefaultArtifact("de.schmizzolin.maven.poms:parent:pom:1.6.1-SNAPSHOT");
+    private static final String MAVEN_PARENT_VERSION_PREFIX = "1.6.2-";
+    private static final Artifact MAVEN_PARENT = new DefaultArtifact("de.schmizzolin.maven.poms:parent:pom:" +
+            MAVEN_PARENT_VERSION_PREFIX + "SNAPSHOT");
 
     private Maven maven;
     private File repo;
@@ -58,7 +60,7 @@ public class MavenTest {
         if (!repo.exists()) {
             repo.mkdirs();
         }
-        maven = new Maven(Config.create(repo, null, null));
+        maven = new Maven(Config.create(repo, null, new File(project, "src/test/settings.xml")));
     }
 
     //--
@@ -184,11 +186,11 @@ public class MavenTest {
 
     @Test
     public void latestSnapshot()
-            throws VersionResolutionException, VersionRangeResolutionException, ArtifactResolutionException, IOException {
+            throws VersionResolutionException, VersionRangeResolutionException, ArtifactResolutionException {
         String version;
 
         version = maven.latestVersion(MAVEN_PARENT);
-        assertTrue(version, version.startsWith("3.4.1-"));
+        assertTrue(version, version.startsWith(MAVEN_PARENT_VERSION_PREFIX));
         assertTrue(maven.resolve(MAVEN_PARENT.setVersion(version)).isFile());
     }
 
@@ -200,7 +202,7 @@ public class MavenTest {
 
         latest = maven.latestVersion(MAVEN_PARENT);
         assertNotNull(latest);
-        assertTrue(latest, latest.startsWith("3.4.1-"));
+        assertTrue(latest, latest.startsWith(MAVEN_PARENT_VERSION_PREFIX));
         artifact = MAVEN_PARENT.setVersion(latest);
         file = maven.resolve(artifact);
         assertTrue(file.isFile());
@@ -232,7 +234,7 @@ public class MavenTest {
         String str;
 
         str = maven.nextVersion(MAVEN_PARENT);
-        assertTrue(str, str.startsWith("3.4.1-"));
+        assertTrue(str, str.startsWith(MAVEN_PARENT_VERSION_PREFIX));
         assertEquals(str, maven.nextVersion(MAVEN_PARENT.setVersion(str)));
     }
 
