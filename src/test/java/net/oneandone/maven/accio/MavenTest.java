@@ -298,4 +298,18 @@ public class MavenTest {
     public void fromSettings() throws IOException {
         assertNotNull(Maven.create());
     }
+
+    //--
+
+    @Test
+    public void todo() throws IOException, ProjectBuildingException {
+        Maven m = Maven.create();
+        MavenProject pom = m.loadPom(file("src/test/with-defaultlifevyvle.pom"));
+        Map<String, Object> with = executions(pom.getModel());
+        System.out.println(with.size() + " " + with.keySet());
+
+        MavenProject pom2 = m.loadPom(file("src/test/with-defaultlifevyvlexx.pom"));
+        Map<String, Object> with2 = executions(pom2.getModel());
+        System.out.println(with2.size() + " " + with2.keySet());
+    }
 }
