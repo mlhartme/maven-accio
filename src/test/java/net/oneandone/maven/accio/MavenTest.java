@@ -22,6 +22,8 @@ import org.apache.maven.project.MavenProject;
 import org.apache.maven.project.ProjectBuildingException;
 import org.eclipse.aether.RepositoryException;
 import org.eclipse.aether.artifact.DefaultArtifact;
+import org.junit.After;
+import org.junit.Before;
 import org.junit.Test;
 import org.eclipse.aether.artifact.Artifact;
 import org.eclipse.aether.resolution.ArtifactResolutionException;
@@ -65,7 +67,18 @@ public class MavenTest {
     private File repo;
     private File project;
 
-    public MavenTest() throws IOException {
+    @Before
+    public void before() throws IOException {
+        project = new File(".").getAbsoluteFile(); // TODO - multi module builds ...
+        repo = new File(project, "target/repo");
+        if (!repo.exists()) {
+            repo.mkdirs();
+        }
+        maven = new Maven(Config.create(repo, null, new File(project, "src/test/settings.xml")));
+    }
+
+    @After
+    public void after() throws IOException {
         project = new File(".").getAbsoluteFile(); // TODO - multi module builds ...
         repo = new File(project, "target/repo");
         if (!repo.exists()) {
