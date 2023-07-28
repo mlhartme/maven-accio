@@ -2,21 +2,23 @@
 
 ### TODO
 
-* find a better name for the project
 * dump compat dependency when Maven's (Dwfault)ProjectBuilderRequest removed ArtifactRepository from it's ProjectBuilderingRequest.
 
 
 ### 4.0.0 (pending)
 
 * renamed to Maven Accio
+* Maven is AutoClosable now, close() invokes container.dispose() to fix memory leak
 * loadPom now defaults to resolve dependencies and process plugins (previously, plugins were never processed)
 * hide internals: removed Maven method getRepositorySystem(), getRepositorySession(), remoteLegacyRepositories() and remoteResolveRepositories()
-* dump sushi dependency, work on files instead
-* update Maven 3.3.9 libraries to 3.9.3
-* update plexus-classworlds 2.5.2 to 2.7.0
-* dump Wagon dependency, Maven itself has replaced it
-* switch from Aether 1.0.2.xx to Maven Artifact Resolver 1.9.13 (https://maven.apache.org/resolver/)
-* switch from MavenSettingsBuilder to SettingsBuilder (fixes deprecation)
+* added tests for profile activation and effective pom building
+* dump sushi dependency, changed Api to work on files instead
+* dependency updates
+  * update Maven 3.3.9 libraries to 3.9.3
+  * update plexus-classworlds 2.5.2 to 2.7.0
+  * switch from Aether 1.0.2.xx to Maven Artifact Resolver 1.9.13 (https://maven.apache.org/resolver/)
+  * switch from MavenSettingsBuilder to SettingsBuilder (fixes deprecation)
+  * dump Wagon dependency, Maven itself has replaced it
 
 
 ### 3.13.0 (2022-12-19)
