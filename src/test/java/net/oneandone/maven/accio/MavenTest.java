@@ -112,10 +112,18 @@ public class MavenTest {
 
     @Test
     public void loadPom() throws ProjectBuildingException {
+        final String executionFromParent = "default-check maven-checkstyle-plugin [check]";
+        final String executionFromDefaultLifecycle = "default-compile maven-compiler-plugin [compile]";
         MavenProject pom;
+        Map<String, Object> executions;
 
         pom = maven.loadPom(file("pom.xml"));
         assertEquals("accio", pom.getArtifactId());
+
+        // check that we see the effective pom
+        executions = executions(pom.getModel());
+        assertTrue(executions.containsKey(executionFromParent));
+        assertTrue(executions.containsKey(executionFromDefaultLifecycle));
     }
 
     @Test
