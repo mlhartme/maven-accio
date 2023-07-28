@@ -67,6 +67,10 @@ public class MavenTest {
     private File repo;
     private File project;
 
+    private File file(String path) {
+        return new File(project, path);
+    }
+
     @Before
     public void before() throws IOException {
         project = new File(".").getAbsoluteFile(); // TODO - multi module builds ...
@@ -79,12 +83,7 @@ public class MavenTest {
 
     @After
     public void after() throws IOException {
-        project = new File(".").getAbsoluteFile(); // TODO - multi module builds ...
-        repo = new File(project, "target/repo");
-        if (!repo.exists()) {
-            repo.mkdirs();
-        }
-        maven = new Maven(Config.create(repo, null, new File(project, "src/test/settings.xml")));
+        maven.close();
     }
 
     //--
@@ -110,10 +109,6 @@ public class MavenTest {
     }
 
     //--
-
-    private File file(String path) {
-        return new File(project, path);
-    }
 
     @Test
     public void loadPom() throws ProjectBuildingException {
