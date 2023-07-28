@@ -171,7 +171,7 @@ public class Maven implements AutoCloseable {
         if (profiles != null) {
             request.setActiveProfileIds(profiles);
         }
-        result = builder.build(file.toPath().toFile(), request);
+        result = builder.build(file, request);
 
         // TODO: I've seen these collection errors for a dependency with ranges. Why does Aether NOT throw an exception in this case?
         if (result.getDependencyResolutionResult() != null) {
