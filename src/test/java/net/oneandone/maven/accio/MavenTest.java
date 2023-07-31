@@ -18,6 +18,9 @@ package net.oneandone.maven.accio;
 import org.apache.maven.model.Model;
 import org.apache.maven.model.Plugin;
 import org.apache.maven.model.PluginExecution;
+import org.apache.maven.model.building.ModelBuildingException;
+import org.apache.maven.plugin.MavenPluginManager;
+import org.apache.maven.plugin.PluginManagerException;
 import org.apache.maven.project.MavenProject;
 import org.apache.maven.project.ProjectBuildingException;
 import org.eclipse.aether.RepositoryException;
@@ -42,6 +45,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 public class MavenTest {
     // run this with -Xmx32m to check for memory leaks
@@ -301,14 +305,23 @@ public class MavenTest {
 
 
     @Test
-    public void restrictedExtensions() throws IOException, ProjectBuildingException {
-        Maven m = new Maven(Config.create(null, null, null, "com.unitedinternet.portal.maven2.pom:portalpom3-configs"));
-        MavenProject pom = m.loadPom(file("src/test/with-defaultlifevyvle.pom"));
-        Map<String, Object> with = executions(pom.getModel());
-        System.out.println(with.size() + " " + with.keySet());
+    public void buildExtensionRejected() throws IOException, ProjectBuildingException {
+        try {
+            maven.loadPom(file("src/test/with-build-extension.pom"));
+            fail();
+        } catch (ProjectBuildingException e) {
+            if (e.getCause() instanceof ModelBuildingException me) {
+                assertTrue(me.toString(), me.toString().contains("extension forbidden"));
+            } else {
+                fail(e.toString());
+            }
+        }
+    }
 
-        MavenProject pom2 = m.loadPom(file("src/test/with-defaultlifevyvlexx.pom"));
-        Map<String, Object> with2 = executions(pom2.getModel());
-        System.out.println(with2.size() + " " + with2.keySet());
+    @Test
+    public void buildExtensionAllowed() throws IOException, ProjectBuildingException {
+        Maven m = new Maven(Config.create(null, null, null, "org.apache.felix:maven-bundle-plugin"));
+        MavenProject pom = m.loadPom(file("src/test/with-build-extension.pom"));
+        assertEquals(1, pom.getModel().getBuild().getExtensions().size());
     }
 }

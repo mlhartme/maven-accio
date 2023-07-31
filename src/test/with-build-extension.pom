@@ -11,9 +11,9 @@
   <build>
     <extensions>
       <extension>
-        <groupId>com.unitedinternet.portal.maven2.pom</groupId>
-        <artifactId>portalpom3-configs</artifactId>
-        <version>1.74</version>
+        <groupId>org.apache.felix</groupId>
+        <artifactId>maven-bundle-plugin</artifactId>
+        <version>4.2.1</version>
       </extension>
     </extensions>
   </build>

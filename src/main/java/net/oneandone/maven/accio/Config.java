@@ -77,6 +77,9 @@ public record Config(PlexusContainer container,
         return create(localRepository, globalSettings, userSettings, createContainer(), allowedExtensions, null, null);
     }
 
+    /**
+     * @param allowedExtensions null to allow all, empty array to forbid all
+     */
     public static Config create(File localRepository, File globalSettings, File userSettings,
                                 DefaultPlexusContainer container, String[] allowedExtensions,
                                 TransferListener transferListener, RepositoryListener repositoryListener) throws IOException {
@@ -88,7 +91,7 @@ public record Config(PlexusContainer container,
 
         try {
             RestrictedMavenPluginManager pm = (RestrictedMavenPluginManager) container.lookup(MavenPluginManager.class);
-            if (allowedExtensions != null && allowedExtensions.length > 0) {
+            if (allowedExtensions != null) {
                 pm.restrict(allowedExtensions);
             }
             try {
