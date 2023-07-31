@@ -18,6 +18,13 @@ There are other [extensions points](https://maven.apache.org/examples/maven-3-li
 * ExecutionEventCatapult/ExecutionListener, used for console/log output
 but they do not load code like AbstractMavenLifecycleParticipant.
 
+## Class loading in Maven
+
+Maven manages class loading with in a Plexus ClassWorlds, new code is added via ClassRealms. The respective code
+is encapsulated in DefaultClassRealmManager. This manager has methods to create project, plugin, and extension realms.
+ProjectRealm is a composit of the contained extension realms. Plugin realms are used when invoking plugin.
+What we need to project is extension realms.
+
 ## Name
 
 https://harrypotter.fandom.com/wiki/Summoning_Charm
