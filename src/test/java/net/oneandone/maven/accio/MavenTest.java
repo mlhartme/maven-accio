@@ -37,6 +37,7 @@ import org.eclipse.aether.version.Version;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -304,8 +305,31 @@ public class MavenTest {
     }
 
 
+    //-- extensions
+
     @Test
-    public void buildExtensionRejected() throws IOException, ProjectBuildingException {
+    public void pluginExtensionRejected() {
+        try {
+            maven.loadPom(file("src/test/with-plugin-extension.pom"));
+            fail();
+        } catch (ProjectBuildingException e) {
+            if (e.getCause() instanceof ModelBuildingException me) {
+                assertTrue(me.toString(), me.toString().contains("extension forbidden"));
+            } else {
+                fail(e.toString());
+            }
+        }
+    }
+
+    @Test
+    public void pluginExtensionAllowed() throws IOException, ProjectBuildingException {
+        Maven m = new Maven(Config.create(null, null, null, "org.apache.felix:maven-bundle-plugin"));
+        MavenProject pom = m.loadPom(file("src/test/with-plugin-extension.pom"));
+        assertEquals("true", pom.getModel().getBuild().getPluginsAsMap().get("org.apache.felix:maven-bundle-plugin").getExtensions());
+    }
+
+    @Test
+    public void buildExtensionRejected() {
         try {
             maven.loadPom(file("src/test/with-build-extension.pom"));
             fail();
