@@ -4,13 +4,13 @@
   <modelVersion>4.0.0</modelVersion>
 
   <parent>
-    <artifactId>multi</artifactId>
-    <groupId>parent</groupId>
+    <groupId>multi</groupId>
+    <artifactId>parent</artifactId>
     <version>1.42</version>
   </parent>
 
-  <artifactId>multi</artifactId>
-  <groupId>child</groupId>
+  <groupId>multi</groupId>
+  <artifactId>child</artifactId>
   <version>1.42</version>
 
   <properties>

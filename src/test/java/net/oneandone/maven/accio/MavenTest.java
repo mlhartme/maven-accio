@@ -353,9 +353,13 @@ public class MavenTest {
 
     @Test
     public void multiModule() throws ProjectBuildingException {
-        MavenProject parent = maven.loadPom(file("src/test/multi/pom.xml"));
-        assertEquals(List.of("child"), parent.getModules());
+
+        // read child first to make sure there's no cached parent used.
+        // Maven will use relativePath to load the pom (or try to resolve it when it's empty)
         MavenProject child = maven.loadPom(file("src/test/multi/child/pom.xml"));
         assertEquals(Map.of("parent", "true", "child", "true"), child.getProperties());
+
+        MavenProject parent = maven.loadPom(file("src/test/multi/pom.xml"));
+        assertEquals(List.of("child"), parent.getModules());
     }
 }
