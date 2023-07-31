@@ -348,4 +348,14 @@ public class MavenTest {
         MavenProject pom = m.loadPom(file("src/test/with-build-extension.pom"));
         assertEquals(1, pom.getModel().getBuild().getExtensions().size());
     }
+
+    //-- multi module
+
+    @Test
+    public void multiModule() throws ProjectBuildingException {
+        MavenProject parent = maven.loadPom(file("src/test/multi/pom.xml"));
+        assertEquals(List.of("child"), parent.getModules());
+        MavenProject child = maven.loadPom(file("src/test/multi/child/pom.xml"));
+        assertEquals(Map.of("parent", "true", "child", "true"), child.getProperties());
+    }
 }
