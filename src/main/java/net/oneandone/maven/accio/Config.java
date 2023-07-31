@@ -18,6 +18,7 @@ package net.oneandone.maven.accio;
 import org.apache.maven.RepositoryUtils;
 import org.apache.maven.artifact.InvalidRepositoryException;
 import org.apache.maven.artifact.repository.ArtifactRepository;
+import org.apache.maven.plugin.MavenPluginManager;
 import org.apache.maven.project.ProjectBuilder;
 import org.apache.maven.repository.internal.MavenRepositorySystemUtils;
 import org.apache.maven.repository.legacy.LegacyRepositorySystem;
@@ -71,13 +72,13 @@ public record Config(PlexusContainer container,
      * @param globalSettings null to use default
      * @param userSettings null to use default
      */
-    public static Config create(File localRepository, File globalSettings, File userSettings)
+    public static Config create(File localRepository, File globalSettings, File userSettings, String... allowedExtensions)
             throws IOException {
-        return create(localRepository, globalSettings, userSettings, createContainer(), null, null);
+        return create(localRepository, globalSettings, userSettings, createContainer(), allowedExtensions, null, null);
     }
 
     public static Config create(File localRepository, File globalSettings, File userSettings,
-                                DefaultPlexusContainer container,
+                                DefaultPlexusContainer container, String[] allowedExtensions,
                                 TransferListener transferListener, RepositoryListener repositoryListener) throws IOException {
         RepositorySystem system;
         DefaultRepositorySystemSession session;
@@ -86,6 +87,10 @@ public record Config(PlexusContainer container,
         List<ArtifactRepository> repositoriesLegacy;
 
         try {
+            RestrictedMavenPluginManager pm = (RestrictedMavenPluginManager) container.lookup(MavenPluginManager.class);
+            if (allowedExtensions != null && allowedExtensions.length > 0) {
+                pm.restrict(allowedExtensions);
+            }
             try {
                 settings = loadSettings(globalSettings, userSettings, container);
             } catch (SettingsBuildingException | XmlPullParserException e) {

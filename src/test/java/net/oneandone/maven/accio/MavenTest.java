@@ -299,11 +299,10 @@ public class MavenTest {
         assertNotNull(Maven.create());
     }
 
-    //--
 
     @Test
-    public void todo() throws IOException, ProjectBuildingException {
-        Maven m = Maven.create();
+    public void restrictedExtensions() throws IOException, ProjectBuildingException {
+        Maven m = new Maven(Config.create(null, null, null, "com.unitedinternet.portal.maven2.pom:portalpom3-configs"));
         MavenProject pom = m.loadPom(file("src/test/with-defaultlifevyvle.pom"));
         Map<String, Object> with = executions(pom.getModel());
         System.out.println(with.size() + " " + with.keySet());
