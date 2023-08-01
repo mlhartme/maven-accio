@@ -137,11 +137,11 @@ public class MavenTest {
         final File pomFile = file("src/test/with-profile.pom");
         MavenProject pom;
 
-        pom = maven.loadPom(pomFile.toPath().toFile());
+        pom = maven.loadPom(pomFile);
         assertEquals("with-profile", pom.getArtifactId());
         assertFalse("contains execution from profile", executions(pom.getModel()).keySet().contains(myExec));
 
-        pom = maven.loadPom(pomFile.toPath().toFile(), true, true, null, List.of("with-surefire"), null);
+        pom = maven.loadPom(pomFile, true, true, null, List.of("with-surefire"), null);
         assertTrue("contains execution from profile", executions(pom.getModel()).keySet().contains(myExec));
     }
 
@@ -157,13 +157,13 @@ public class MavenTest {
         Files.copy(file("src/test/with-activation.pom").toPath(), pomFile.toPath());
 
         assertFalse(marker.exists());
-        pom = maven.loadPom(pomFile.toPath().toFile());
+        pom = maven.loadPom(pomFile);
         assertEquals("with-activation", pom.getArtifactId());
         assertFalse("contains execution from profile", executions(pom.getModel()).keySet().contains(myExec));
 
         Files.writeString(marker.toPath(), "touch");
         assertTrue(marker.exists());
-        pom = maven.loadPom(pomFile.toPath().toFile());
+        pom = maven.loadPom(pomFile);
         assertEquals("with-activation", pom.getArtifactId());
         assertTrue("contains execution from profile", executions(pom.getModel()).keySet().contains(myExec));
     }
