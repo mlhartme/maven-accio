@@ -344,7 +344,7 @@ public class MavenTest {
     //-- multi module
 
     @Test
-    public void multiModuleWithoutParent() throws ProjectBuildingException, RepositoryException {
+    public void multiModuleWithoutParent() throws ProjectBuildingException {
 
         // read child first to make sure there's no cached parent used.
         // Maven will use relativePath to load the pom (or try to resolve it when it's empty)
@@ -353,12 +353,22 @@ public class MavenTest {
     }
 
     @Test
-    public void multiModule() throws ProjectBuildingException, RepositoryException {
+    public void multiModule() throws ProjectBuildingException {
         List<MavenProject> projects = maven.loadAllPoms(true, file("src/test/multi/pom.xml").getAbsoluteFile(), false, null, null);
         assertEquals(2, projects.size());
         MavenProject child = projects.get(0);
         assertEquals(Map.of("parent", "true", "child", "true"), child.getProperties());
         MavenProject parent = projects.get(1);
         assertEquals(List.of("child"), parent.getModules());
+    }
+
+    @Test
+    public void multiNoRelativeModule() {
+        try {
+            List<MavenProject> projects = maven.loadAllPoms(true, file("src/test/multi-no-relative/pom.xml").getAbsoluteFile(), false, null, null);
+        } catch (ProjectBuildingException e) {
+            assertTrue(e.getMessage(), e.getMessage().contains("multi:parent:pom:1.42"));
+            assertTrue(e.getMessage(), e.getMessage().contains("points at no local POM"));
+        }
     }
 }
