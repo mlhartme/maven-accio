@@ -62,7 +62,7 @@ import java.util.List;
 
 public record Config(PlexusContainer container,
                      RepositorySystem repositorySystem, DefaultRepositorySystemSession repositorySession, ProjectBuilder builder,
-                     List<RemoteRepository> remote, ArtifactRepository localLegacy, List<ArtifactRepository> remoteLegacy) {
+                     List<RemoteRepository> remote, ArtifactRepository localLegacy, List<ArtifactRepository> remoteLegacy, List<ArtifactRepository> pluginRemoteLegacy) {
     public static Config create() throws IOException {
         return create(null, null, null);
     }
@@ -88,6 +88,7 @@ public record Config(PlexusContainer container,
         Settings settings;
         LegacyRepositorySystem legacySystem;
         List<ArtifactRepository> repositoriesLegacy;
+        List<ArtifactRepository> pluginRepositoriesLegacy;
         LocalRepository lr;
 
         try {
@@ -104,12 +105,14 @@ public record Config(PlexusContainer container,
             lr = createLocalRepository(localRepository, settings);
             session = createSession(transferListener, repositoryListener, system, lr, settings);
             legacySystem = (LegacyRepositorySystem) container.lookup(org.apache.maven.repository.RepositorySystem.class, "default");
-            repositoriesLegacy = repositoriesLegacy(legacySystem, settings);
+            repositoriesLegacy = new ArrayList<>();
+            pluginRepositoriesLegacy = new ArrayList<>();
+            repositoriesLegacy(legacySystem, settings, repositoriesLegacy, pluginRepositoriesLegacy);
             legacySystem.injectAuthentication(session, repositoriesLegacy);
             legacySystem.injectMirror(session, repositoriesLegacy);
             legacySystem.injectProxy(session, repositoriesLegacy);
             return new Config(container, system, session, container.lookup(ProjectBuilder.class),
-                    RepositoryUtils.toRepos(repositoriesLegacy), legacySystem.createLocalRepository(lr.getBasedir()), repositoriesLegacy);
+                    RepositoryUtils.toRepos(repositoriesLegacy), legacySystem.createLocalRepository(lr.getBasedir()), repositoriesLegacy, pluginRepositoriesLegacy);
         } catch (InvalidRepositoryException | ComponentLookupException e) {
             throw new IllegalStateException(e);
         }
@@ -311,15 +314,14 @@ public record Config(PlexusContainer container,
         throw new IOException("cannot locate maven's conf directory - consider settings MAVEN_HOME or adding mvn to your path");
     }
 
-    private static List<ArtifactRepository> repositoriesLegacy(LegacyRepositorySystem legacy, Settings settings)
+    private static void repositoriesLegacy(LegacyRepositorySystem legacy, Settings settings,
+                                           List<ArtifactRepository> resultRepositories, List<ArtifactRepository> resultPluginRepositories)
             throws InvalidRepositoryException {
         boolean central;
-        List<ArtifactRepository> result;
         List<String> actives;
         ArtifactRepository artifactRepository;
 
         central = false;
-        result = new ArrayList<>();
         actives = settings.getActiveProfiles();
         for (Profile profile : settings.getProfiles()) {
             if (actives.contains(profile.getId()) || (profile.getActivation() != null && profile.getActivation().isActiveByDefault())) {
@@ -328,7 +330,11 @@ public record Config(PlexusContainer container,
                     if ("central".equals(artifactRepository.getId())) {
                         central = true;
                     }
-                    result.add(artifactRepository);
+                    resultRepositories.add(artifactRepository);
+                }
+                for (org.apache.maven.model.Repository repository : SettingsUtils.convertFromSettingsProfile(profile).getPluginRepositories()) {
+                    artifactRepository = legacy.buildArtifactRepository(repository);
+                    resultPluginRepositories.add(artifactRepository);
                 }
             }
         }
@@ -338,8 +344,7 @@ public record Config(PlexusContainer container,
                I first added central to repositories only, because legacy repositories are used to load poms which ultimatly load the
                master parent with it's repository definition. However, the parent might have to be loaded from central, so repositories
                also need a central definition. */
-            result.add(legacy.createDefaultRemoteRepository());
+            resultRepositories.add(legacy.createDefaultRemoteRepository());
         }
-        return result;
     }
 }

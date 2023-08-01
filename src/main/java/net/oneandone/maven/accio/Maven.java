@@ -72,6 +72,7 @@ public class Maven implements AutoCloseable {
 
     /** Remote repositories used to load poms. Legacy objects :( */
     private final List<ArtifactRepository> remoteLegacy;
+    private final List<ArtifactRepository> pluginRemoteLegacy;
 
     // This is the ProjectBuilder used by Maven 3.9.3 to load poms. Note that the respective ProjectBuilderRequest uses
     // the deprecated org.apache.maven.artifact.repository.ArtifactRepository class, so deprecation warnings are unavailable.
@@ -85,6 +86,7 @@ public class Maven implements AutoCloseable {
         this.remote = config.remote();
         this.localLegacy = config.localLegacy();
         this.remoteLegacy = config.remoteLegacy();
+        this.pluginRemoteLegacy = config.pluginRemoteLegacy();
     }
 
     //--
@@ -163,7 +165,7 @@ public class Maven implements AutoCloseable {
             request.setUserProperties(userProperties);
         }
         request.setRemoteRepositories(remoteLegacy);
-        // TODO request.setPluginArtifactRepositories(getPluginArtifactRepositories());
+        request.setPluginArtifactRepositories(pluginRemoteLegacy);
         if (profiles != null) {
             request.setActiveProfileIds(profiles);
         }
