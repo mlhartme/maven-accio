@@ -18,12 +18,10 @@ package net.oneandone.maven.accio;
 import org.apache.maven.artifact.repository.ArtifactRepository;
 import org.apache.maven.artifact.repository.metadata.GroupRepositoryMetadata;
 import org.apache.maven.artifact.repository.metadata.MetadataBridge;
-import org.apache.maven.model.building.ModelBuildingRequest;
 import org.apache.maven.project.DefaultProjectBuildingRequest;
 import org.apache.maven.project.MavenProject;
 import org.apache.maven.project.ProjectBuilder;
 import org.apache.maven.project.ProjectBuildingException;
-import org.apache.maven.project.ProjectBuildingRequest;
 import org.apache.maven.project.ProjectBuildingResult;
 import org.codehaus.plexus.PlexusContainer;
 import org.eclipse.aether.DefaultRepositorySystemSession;
@@ -50,6 +48,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Date;
 import java.util.List;
 import java.util.Properties;
 
@@ -69,6 +68,8 @@ public class Maven implements AutoCloseable {
      */
     private final List<RemoteRepository> remote;
 
+    private final ArtifactRepository localLegacy;
+
     /** Remote repositories used to load poms. Legacy objects :( */
     private final List<ArtifactRepository> remoteLegacy;
 
@@ -82,6 +83,7 @@ public class Maven implements AutoCloseable {
         this.repositorySession = config.repositorySession();
         this.builder = config.builder();
         this.remote = config.remote();
+        this.localLegacy = config.localLegacy();
         this.remoteLegacy = config.remoteLegacy();
     }
 
@@ -136,40 +138,44 @@ public class Maven implements AutoCloseable {
     }
 
     public MavenProject loadPom(File file, boolean resolve) throws ProjectBuildingException {
-        return loadPom(file, resolve, resolve, null, null);
+        return loadPom(file, resolve, null, null);
     }
 
     /**
      * @param userProperties may be null
      * @param profiles specifies profile to explicitly enable, may be null */
-    public MavenProject loadPom(File file, boolean resolve, boolean processPLugins, Properties userProperties, List<String> profiles)
+    public MavenProject loadPom(File file, boolean resolve, Properties userProperties, List<String> profiles)
             throws ProjectBuildingException {
-        return loadAllPoms(false, file, resolve, processPLugins, userProperties, profiles).get(0);
+        return loadAllPoms(false, file, resolve, userProperties, profiles).get(0);
     }
 
-    public List<MavenProject> loadAllPoms(boolean recursive, File file, boolean resolve, boolean processPlugins, Properties userProperties, List<String> profiles)
+    public List<MavenProject> loadAllPoms(boolean recursive, File file, boolean resolve,  Properties userProperties, List<String> profiles)
             throws ProjectBuildingException {
         DefaultProjectBuildingRequest request;
         List<ProjectBuildingResult> resultList;
         List<MavenProject> pomList;
 
+        // from DefaultMavenExecutionRequest.getProjectBuildingRequest()
         request = new DefaultProjectBuildingRequest();
-        request.setRepositorySession(repositorySession);
-        request.setRemoteRepositories(remoteLegacy);
-        request.setProcessPlugins(processPlugins);
-        request.setValidationLevel(ModelBuildingRequest.VALIDATION_LEVEL_MINIMAL);
+        request.setLocalRepository(localLegacy);
         request.setSystemProperties(System.getProperties());
         if (userProperties != null) {
             request.setUserProperties(userProperties);
         }
-        // If you don't turn this into RepositoryMerging.REQUEST_DOMINANT the dependencies will be resolved against Maven Central
-        // and not against the configured repositories. The default of the DefaultProjectBuildingRequest is
-        // RepositoryMerging.POM_DOMINANT.
-        request.setRepositoryMerging(ProjectBuildingRequest.RepositoryMerging.REQUEST_DOMINANT);
-        request.setResolveDependencies(resolve);
+        request.setRemoteRepositories(remoteLegacy);
+        // TODO request.setPluginArtifactRepositories(getPluginArtifactRepositories());
         if (profiles != null) {
             request.setActiveProfileIds(profiles);
         }
+        request.setProcessPlugins(true);
+        request.setBuildStartTime(new Date());
+
+        // from MavenSession.getProjectBuildingRequest
+        request.setRepositorySession(repositorySession);
+
+        // TODO
+        request.setResolveDependencies(resolve);
+
         resultList = builder.build(List.of(file), recursive, request);
 
         pomList = new ArrayList<>();

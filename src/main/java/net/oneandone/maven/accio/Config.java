@@ -62,7 +62,7 @@ import java.util.List;
 
 public record Config(PlexusContainer container,
                      RepositorySystem repositorySystem, DefaultRepositorySystemSession repositorySession, ProjectBuilder builder,
-                     List<RemoteRepository> remote, List<ArtifactRepository> remoteLegacy) {
+                     List<RemoteRepository> remote, ArtifactRepository localLegacy, List<ArtifactRepository> remoteLegacy) {
     public static Config create() throws IOException {
         return create(null, null, null);
     }
@@ -88,6 +88,7 @@ public record Config(PlexusContainer container,
         Settings settings;
         LegacyRepositorySystem legacySystem;
         List<ArtifactRepository> repositoriesLegacy;
+        LocalRepository lr;
 
         try {
             RestrictedMavenPluginManager pm = (RestrictedMavenPluginManager) container.lookup(MavenPluginManager.class);
@@ -100,15 +101,15 @@ public record Config(PlexusContainer container,
                 throw new IOException("cannot load settings: " + e.getMessage(), e);
             }
             system = container.lookup(RepositorySystem.class);
-            session = createSession(transferListener, repositoryListener, system,
-                    createLocalRepository(localRepository, settings), settings);
+            lr = createLocalRepository(localRepository, settings);
+            session = createSession(transferListener, repositoryListener, system, lr, settings);
             legacySystem = (LegacyRepositorySystem) container.lookup(org.apache.maven.repository.RepositorySystem.class, "default");
             repositoriesLegacy = repositoriesLegacy(legacySystem, settings);
             legacySystem.injectAuthentication(session, repositoriesLegacy);
             legacySystem.injectMirror(session, repositoriesLegacy);
             legacySystem.injectProxy(session, repositoriesLegacy);
             return new Config(container, system, session, container.lookup(ProjectBuilder.class),
-                    RepositoryUtils.toRepos(repositoriesLegacy), repositoriesLegacy);
+                    RepositoryUtils.toRepos(repositoriesLegacy), legacySystem.createLocalRepository(lr.getBasedir()), repositoriesLegacy);
         } catch (InvalidRepositoryException | ComponentLookupException e) {
             throw new IllegalStateException(e);
         }
@@ -116,7 +117,6 @@ public record Config(PlexusContainer container,
 
     private static LocalRepository createLocalRepository(File localRepository, Settings settings) {
         String localRepositoryStr;
-        LocalRepository localRepositoryObj;
 
         if (localRepository == null) {
             // TODO: who has precedence: repodir from settings or from MAVEN_OPTS
