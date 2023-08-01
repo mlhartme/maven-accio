@@ -130,8 +130,7 @@ public record Config(PlexusContainer container,
         } else {
             localRepositoryStr = localRepository.getAbsolutePath();
         }
-        localRepositoryObj = new LocalRepository(localRepositoryStr);
-        return localRepositoryObj;
+        return new LocalRepository(localRepositoryStr);
     }
 
     private static DefaultRepositorySystemSession createSession(TransferListener transferListener, RepositoryListener repositoryListener,
@@ -263,8 +262,8 @@ public record Config(PlexusContainer container,
         if (userSettings == null) {
             userSettings = new File(IO.userHome(), ".m2/settings.xml");
         }
-        request.setGlobalSettingsFile(globalSettings.toPath().toFile());
-        request.setUserSettingsFile(userSettings.toPath().toFile());
+        request.setGlobalSettingsFile(globalSettings);
+        request.setUserSettingsFile(userSettings);
         return builder.build(request).getEffectiveSettings();
     }
 
