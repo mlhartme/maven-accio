@@ -34,7 +34,6 @@ import org.eclipse.aether.artifact.ArtifactType;
 import org.eclipse.aether.artifact.DefaultArtifact;
 import org.eclipse.aether.deployment.DeployRequest;
 import org.eclipse.aether.deployment.DeploymentException;
-import org.eclipse.aether.graph.Dependency;
 import org.eclipse.aether.repository.RemoteRepository;
 import org.eclipse.aether.resolution.ArtifactRequest;
 import org.eclipse.aether.resolution.ArtifactResolutionException;
@@ -141,20 +140,19 @@ public class Maven implements AutoCloseable {
     }
 
     public MavenProject loadPom(File file, boolean resolve) throws RepositoryException, ProjectBuildingException {
-        return loadPom(file, resolve, resolve, null, null, null);
+        return loadPom(file, resolve, resolve, null, null);
     }
 
     /**
      * @param userProperties may be null
-     * @param profiles specifies profile to explicitly enable, may be null
-     * @param dependencies out argument, receives all dependencies if not null */
-    public MavenProject loadPom(File file, boolean resolve, boolean processPLugins, Properties userProperties, List<String> profiles,
-                                List<Dependency> dependencies) throws RepositoryException, ProjectBuildingException {
-        return loadAllPoms(false, file, resolve, processPLugins, userProperties, profiles, dependencies).get(0);
+     * @param profiles specifies profile to explicitly enable, may be null */
+    public MavenProject loadPom(File file, boolean resolve, boolean processPLugins, Properties userProperties, List<String> profiles)
+            throws RepositoryException, ProjectBuildingException {
+        return loadAllPoms(false, file, resolve, processPLugins, userProperties, profiles).get(0);
     }
 
-    public List<MavenProject> loadAllPoms(boolean recursive, File file, boolean resolve, boolean processPLugins, Properties userProperties, List<String> profiles,
-                                          List<Dependency> dependencies) throws RepositoryException, ProjectBuildingException {
+    public List<MavenProject> loadAllPoms(boolean recursive, File file, boolean resolve, boolean processPLugins, Properties userProperties, List<String> profiles)
+            throws RepositoryException, ProjectBuildingException {
         DefaultProjectBuildingRequest request;
         List<ProjectBuildingResult> resultList;
         List<Exception> problems;
@@ -181,20 +179,6 @@ public class Maven implements AutoCloseable {
 
         pomList = new ArrayList<>();
         for (ProjectBuildingResult result : resultList) {
-            // TODO: I've seen these collection errors for a dependency with ranges. Why does Aether NOT throw an exception in this case?
-            if (result.getDependencyResolutionResult() != null) {
-                problems = result.getDependencyResolutionResult().getCollectionErrors();
-                if (problems != null && !problems.isEmpty()) {
-                    throw new RepositoryException("collection errors: " + problems.toString(), problems.get(0));
-                }
-            }
-
-            if (dependencies != null) {
-                if (!resolve) {
-                    throw new IllegalArgumentException();
-                }
-                dependencies.addAll(result.getDependencyResolutionResult().getDependencies());
-            }
             pomList.add(result.getProject());
         }
         return pomList;

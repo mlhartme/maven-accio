@@ -141,7 +141,7 @@ public class MavenTest {
         assertEquals("with-profile", pom.getArtifactId());
         assertFalse("contains execution from profile", executions(pom.getModel()).keySet().contains(myExec));
 
-        pom = maven.loadPom(pomFile, true, true, null, List.of("with-surefire"), null);
+        pom = maven.loadPom(pomFile, true, true, null, List.of("with-surefire"));
         assertTrue("contains execution from profile", executions(pom.getModel()).keySet().contains(myExec));
     }
 
@@ -354,7 +354,7 @@ public class MavenTest {
 
     @Test
     public void multiModule() throws ProjectBuildingException, RepositoryException {
-        List<MavenProject> projects = maven.loadAllPoms(true, file("src/test/multi/pom.xml").getAbsoluteFile(), false, false, null, null, null);
+        List<MavenProject> projects = maven.loadAllPoms(true, file("src/test/multi/pom.xml").getAbsoluteFile(), false, false, null, null);
         assertEquals(2, projects.size());
         MavenProject child = projects.get(0);
         assertEquals(Map.of("parent", "true", "child", "true"), child.getProperties());
