@@ -132,14 +132,10 @@ public class Maven implements AutoCloseable {
     }
 
     public MavenProject loadPom(File file) throws ProjectBuildingException {
-        try {
-            return loadPom(file, true);
-        } catch (RepositoryException e) {
-            throw new IllegalStateException(e);
-        }
+        return loadPom(file, true);
     }
 
-    public MavenProject loadPom(File file, boolean resolve) throws RepositoryException, ProjectBuildingException {
+    public MavenProject loadPom(File file, boolean resolve) throws ProjectBuildingException {
         return loadPom(file, resolve, resolve, null, null);
     }
 
@@ -147,21 +143,20 @@ public class Maven implements AutoCloseable {
      * @param userProperties may be null
      * @param profiles specifies profile to explicitly enable, may be null */
     public MavenProject loadPom(File file, boolean resolve, boolean processPLugins, Properties userProperties, List<String> profiles)
-            throws RepositoryException, ProjectBuildingException {
+            throws ProjectBuildingException {
         return loadAllPoms(false, file, resolve, processPLugins, userProperties, profiles).get(0);
     }
 
-    public List<MavenProject> loadAllPoms(boolean recursive, File file, boolean resolve, boolean processPLugins, Properties userProperties, List<String> profiles)
-            throws RepositoryException, ProjectBuildingException {
+    public List<MavenProject> loadAllPoms(boolean recursive, File file, boolean resolve, boolean processPlugins, Properties userProperties, List<String> profiles)
+            throws ProjectBuildingException {
         DefaultProjectBuildingRequest request;
         List<ProjectBuildingResult> resultList;
-        List<Exception> problems;
         List<MavenProject> pomList;
 
         request = new DefaultProjectBuildingRequest();
         request.setRepositorySession(repositorySession);
         request.setRemoteRepositories(remoteLegacy);
-        request.setProcessPlugins(processPLugins);
+        request.setProcessPlugins(processPlugins);
         request.setValidationLevel(ModelBuildingRequest.VALIDATION_LEVEL_MINIMAL);
         request.setSystemProperties(System.getProperties());
         if (userProperties != null) {
