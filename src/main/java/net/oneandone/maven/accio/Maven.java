@@ -150,9 +150,15 @@ public class Maven implements AutoCloseable {
      * @param dependencies out argument, receives all dependencies if not null */
     public MavenProject loadPom(File file, boolean resolve, boolean processPLugins, Properties userProperties, List<String> profiles,
                                 List<Dependency> dependencies) throws RepositoryException, ProjectBuildingException {
-        ProjectBuildingRequest request;
-        ProjectBuildingResult result;
+        return loadAllPoms(false, file, resolve, processPLugins, userProperties, profiles, dependencies).get(0);
+    }
+
+    public List<MavenProject> loadAllPoms(boolean recursive, File file, boolean resolve, boolean processPLugins, Properties userProperties, List<String> profiles,
+                                          List<Dependency> dependencies) throws RepositoryException, ProjectBuildingException {
+        DefaultProjectBuildingRequest request;
+        List<ProjectBuildingResult> resultList;
         List<Exception> problems;
+        List<MavenProject> pomList;
 
         request = new DefaultProjectBuildingRequest();
         request.setRepositorySession(repositorySession);
@@ -171,23 +177,27 @@ public class Maven implements AutoCloseable {
         if (profiles != null) {
             request.setActiveProfileIds(profiles);
         }
-        result = builder.build(file, request);
+        resultList = builder.build(List.of(file), recursive, request);
 
-        // TODO: I've seen these collection errors for a dependency with ranges. Why does Aether NOT throw an exception in this case?
-        if (result.getDependencyResolutionResult() != null) {
-            problems = result.getDependencyResolutionResult().getCollectionErrors();
-            if (problems != null && !problems.isEmpty()) {
-                throw new RepositoryException("collection errors: " + problems.toString(), problems.get(0));
+        pomList = new ArrayList<>();
+        for (ProjectBuildingResult result : resultList) {
+            // TODO: I've seen these collection errors for a dependency with ranges. Why does Aether NOT throw an exception in this case?
+            if (result.getDependencyResolutionResult() != null) {
+                problems = result.getDependencyResolutionResult().getCollectionErrors();
+                if (problems != null && !problems.isEmpty()) {
+                    throw new RepositoryException("collection errors: " + problems.toString(), problems.get(0));
+                }
             }
-        }
 
-        if (dependencies != null) {
-            if (!resolve) {
-                throw new IllegalArgumentException();
+            if (dependencies != null) {
+                if (!resolve) {
+                    throw new IllegalArgumentException();
+                }
+                dependencies.addAll(result.getDependencyResolutionResult().getDependencies());
             }
-            dependencies.addAll(result.getDependencyResolutionResult().getDependencies());
+            pomList.add(result.getProject());
         }
-        return result.getProject();
+        return pomList;
     }
 
     //-- versions

@@ -141,6 +141,11 @@ public record Config(PlexusContainer container,
 
         servers = settings.getServers();
         session = MavenRepositorySystemUtils.newSession();
+
+        // TODO need this?
+        // session.setCache(new DefaultRepositoryCache());
+        // session.setWorkspaceReader(MavenChainedWorkspaceReader.of(Collections.emptyList()));
+
         session.setAuthenticationSelector(new AuthenticationSelector() {
             @Override
             public Authentication getAuthentication(RemoteRepository repository) {

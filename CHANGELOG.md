@@ -8,6 +8,7 @@
 ### 4.0.0 (pending)
 
 * renamed to Maven Accio
+* added support to load projects recursively
 * Maven is AutoClosable now, close() invokes container.dispose() to fix memory leak
 * loadPom now defaults to resolve dependencies and process plugins (previously, plugins were never processed)
 * hide internals: removed Maven method getRepositorySystem(), getRepositorySession(), remoteLegacyRepositories() and remoteResolveRepositories()

@@ -313,11 +313,7 @@ public class MavenTest {
             maven.loadPom(file("src/test/with-plugin-extension.pom"));
             fail();
         } catch (ProjectBuildingException e) {
-            if (e.getCause() instanceof ModelBuildingException me) {
-                assertTrue(me.toString(), me.toString().contains("extension forbidden"));
-            } else {
-                fail(e.toString());
-            }
+            assertTrue(e.toString(), e.toString().contains("extension forbidden"));
         }
     }
 
@@ -334,11 +330,7 @@ public class MavenTest {
             maven.loadPom(file("src/test/with-build-extension.pom"));
             fail();
         } catch (ProjectBuildingException e) {
-            if (e.getCause() instanceof ModelBuildingException me) {
-                assertTrue(me.toString(), me.toString().contains("extension forbidden"));
-            } else {
-                fail(e.toString());
-            }
+            assertTrue(e.toString(), e.toString().contains("extension forbidden"));
         }
     }
 
@@ -352,14 +344,21 @@ public class MavenTest {
     //-- multi module
 
     @Test
-    public void multiModule() throws ProjectBuildingException {
+    public void multiModuleWithoutParent() throws ProjectBuildingException, RepositoryException {
 
         // read child first to make sure there's no cached parent used.
         // Maven will use relativePath to load the pom (or try to resolve it when it's empty)
         MavenProject child = maven.loadPom(file("src/test/multi/child/pom.xml"));
         assertEquals(Map.of("parent", "true", "child", "true"), child.getProperties());
+    }
 
-        MavenProject parent = maven.loadPom(file("src/test/multi/pom.xml"));
+    @Test
+    public void multiModule() throws ProjectBuildingException, RepositoryException {
+        List<MavenProject> projects = maven.loadAllPoms(true, file("src/test/multi/pom.xml").getAbsoluteFile(), false, false, null, null, null);
+        assertEquals(2, projects.size());
+        MavenProject child = projects.get(0);
+        assertEquals(Map.of("parent", "true", "child", "true"), child.getProperties());
+        MavenProject parent = projects.get(1);
         assertEquals(List.of("child"), parent.getModules());
     }
 }
