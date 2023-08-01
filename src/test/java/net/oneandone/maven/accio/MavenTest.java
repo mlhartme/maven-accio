@@ -365,7 +365,7 @@ public class MavenTest {
     @Test
     public void multiNoRelativeModule() {
         try {
-            List<MavenProject> projects = maven.loadAllPoms(true, file("src/test/multi-no-relative/pom.xml").getAbsoluteFile(), false, null, null);
+            maven.loadAllPoms(true, file("src/test/multi-no-relative/pom.xml").getAbsoluteFile(), false, null, null);
         } catch (ProjectBuildingException e) {
             assertTrue(e.getMessage(), e.getMessage().contains("multi:parent:pom:1.42"));
             assertTrue(e.getMessage(), e.getMessage().contains("points at no local POM"));
