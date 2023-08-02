@@ -9,7 +9,7 @@
 
 * renamed to Maven Accio
 * Maven is AutoClosable now, close() invokes container.dispose() to fix memory leak
-* added RestrictedaavenPluginManager that can block extension code beeing loaded
+* added RestrictedClassRealmManager that can block extension classes/resources being loaded
 * Maven.loadPom 
   * added support to load projects recursively
   * removed dependencies out argument - use MavenProject.getArtifacts() instead

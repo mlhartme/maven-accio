@@ -27,7 +27,7 @@ public class RestrictedClassRealmManager extends DefaultClassRealmManager {
     public RestrictedClassRealmManager(Logger logger, PlexusContainer container, List<ClassRealmManagerDelegate> delegates, CoreExports exports) {
         super(logger, container, delegates, exports);
         this.logger = logger;
-        this.allowedGroupArtifacts = null;
+        this.allowedGroupArtifacts = List.of();
         this.loadedExtensions = new ArrayList<>();
         this.blockedExtensions = new ArrayList<>();
     }

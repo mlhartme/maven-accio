@@ -317,6 +317,15 @@ public class MavenTest {
 
     private static final String EXTENSION_GAV = "org.apache.felix:maven-bundle-plugin:4.2.1";
 
+    /*
+    @Test
+    public void todo() throws ProjectBuildingException, IOException {
+        maven = new Maven(Config.create(null, null, null, "com.unitedinternet.portal.maven2.pom:portalpom3-configs"));
+        MavenProject pom = maven.loadPom(new File("/Users/mhm/Projects/git.mam.dev/mamido/java/user-janitor/pom.xml"));
+        assertEquals(List.of("com.unitedinternet.portal.maven2.pom:portalpom3-configs:1.74"), maven.getLoadedExtensions());
+        assertEquals(List.of(), maven.getBlockedExtensions());
+    }*/
+
     @Test
     public void pluginExtensionBlocked() throws ProjectBuildingException {
         MavenProject pom = maven.loadPom(file("src/test/with-plugin-extension.pom"));
