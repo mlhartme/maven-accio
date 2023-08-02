@@ -113,7 +113,6 @@ public record Config(PlexusContainer container,
             legacySystem.injectMirror(session, repositoriesLegacy);
             legacySystem.injectProxy(session, repositoriesLegacy);
             RejectingMavenPluginManager pm = (RejectingMavenPluginManager) container.lookup(MavenPluginManager.class);
-            pm.allow("https://repo.maven.apache.org/maven2"); // TODO
             for (var repo : pluginRepositoriesLegacy) {
                 pm.allow(repo.getUrl());
             }

@@ -95,8 +95,13 @@ public class MavenTest {
 
     @Test
     public void pluginRepositories() throws ProjectBuildingException {
-        MavenProject pom = maven.loadPom(file("src/test/with-plugin-repository.pom"));
-        assertEquals(List.of("extra", "central"), pom.getPluginRepositories().stream().map(repository -> repository.getId()).toList());
+        try {
+            MavenProject pom = maven.loadPom(file("src/test/with-plugin-repository.pom"));
+            fail();
+        } catch (IllegalArgumentException e) {
+            assertTrue(e.getMessage(), e.getMessage().contains("rejected"));
+            assertTrue(e.getMessage(), e.getMessage().contains("https://some.extra.repo/"));
+        }
     }
 
     //--

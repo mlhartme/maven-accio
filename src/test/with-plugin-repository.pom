@@ -12,20 +12,18 @@
   <pluginRepositories>
     <pluginRepository>
       <id>extra</id>
-      <url>https://s01.oss.sonatype.org/content/repositories/snapshots/</url>
+      <url>https://some.extra.repo/</url>
       <releases><enabled>true</enabled></releases>
       <snapshots><enabled>true</enabled></snapshots>
     </pluginRepository>
   </pluginRepositories>
   <build>
-    <pluginManagement>
-      <plugins>
-        <plugin>
-          <artifactId>maven-clean-plugin</artifactId>
-          <groupId>org.apache.maven.plugins</groupId>
-          <version>4.0.0-SNAPSHOT</version>
-        </plugin>
-      </plugins>
-    </pluginManagement>
+    <extensions>
+      <extension>
+        <groupId>org.apache.felix</groupId>
+        <artifactId>maven-bundle-plugin</artifactId>
+        <version>4.2.1</version>
+      </extension>
+    </extensions>
   </build>
 </project>
