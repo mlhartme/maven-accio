@@ -18,12 +18,14 @@ There are other [extensions points](https://maven.apache.org/examples/maven-3-li
 * ExecutionEventCatapult/ExecutionListener, used for console/log output
 but they do not load code like AbstractMavenLifecycleParticipant.
 
-## Class loading in Maven
+## More class loading in Maven
 
-Maven manages class loading with in a Plexus ClassWorlds, new code is added via ClassRealms. The respective code
-is encapsulated in DefaultClassRealmManager. This manager has methods to create project, plugin, and extension realms.
-ProjectRealm is a composit of the contained extension realms. Plugin realms are used when invoking plugin.
-What we need to project is extension realms.
+Maven manages class loading with Plexus ClassWorlds, new code is added via ClassRealms, and a ClassRealmManager controls all this. 
+This manager has methods to create project, plugin, and extension realms. ProjectRealm is a composite of the contained extension realms. 
+Plugin realms are used when invoking plugin. 
+
+When loading a pom, the project realm and thus all plugin realms are created, which enabled extensions to override components used
+by Maven and thus inject code. Accio provides a BlockingClassRealmManager to avoid this.
 
 ## Name
 
