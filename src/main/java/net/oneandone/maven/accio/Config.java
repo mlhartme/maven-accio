@@ -19,6 +19,7 @@ import org.apache.maven.RepositoryUtils;
 import org.apache.maven.artifact.InvalidRepositoryException;
 import org.apache.maven.artifact.repository.ArtifactRepository;
 import org.apache.maven.classrealm.ClassRealmManager;
+import org.apache.maven.plugin.MavenPluginManager;
 import org.apache.maven.project.ProjectBuilder;
 import org.apache.maven.repository.internal.MavenRepositorySystemUtils;
 import org.apache.maven.repository.legacy.LegacyRepositorySystem;
@@ -72,16 +73,16 @@ public record Config(PlexusContainer container,
      * @param globalSettings null to use default
      * @param userSettings null to use default
      */
-    public static Config create(File localRepository, File globalSettings, File userSettings, String... allowedExtensions)
+    public static Config create(File localRepository, File globalSettings, File userSettings, String... allowExtensions)
             throws IOException {
-        return create(localRepository, globalSettings, userSettings, createContainer(), allowedExtensions, null, null);
+        return create(localRepository, globalSettings, userSettings, createContainer(), allowExtensions, null, null);
     }
 
     /**
-     * @param allowedExtensions null to allow all, empty array to forbid all
+     * @param allowExtensions null to allow all, empty array to forbid all
      */
     public static Config create(File localRepository, File globalSettings, File userSettings,
-                                DefaultPlexusContainer container, String[] allowedExtensions,
+                                DefaultPlexusContainer container, String[] allowExtensions,
                                 TransferListener transferListener, RepositoryListener repositoryListener) throws IOException {
         RepositorySystem system;
         DefaultRepositorySystemSession session;
@@ -92,9 +93,9 @@ public record Config(PlexusContainer container,
         LocalRepository lr;
 
         try {
-            BlockingClassRealmManager pm = (BlockingClassRealmManager) container.lookup(ClassRealmManager.class);
-            if (allowedExtensions != null) {
-                pm.allow(allowedExtensions);
+            BlockingClassRealmManager rm = (BlockingClassRealmManager) container.lookup(ClassRealmManager.class);
+            if (allowExtensions != null) {
+                rm.allow(allowExtensions);
             }
             try {
                 settings = loadSettings(globalSettings, userSettings, container);
@@ -111,6 +112,11 @@ public record Config(PlexusContainer container,
             legacySystem.injectAuthentication(session, repositoriesLegacy);
             legacySystem.injectMirror(session, repositoriesLegacy);
             legacySystem.injectProxy(session, repositoriesLegacy);
+            RejectingMavenPluginManager pm = (RejectingMavenPluginManager) container.lookup(MavenPluginManager.class);
+            pm.allow("https://repo.maven.apache.org/maven2"); // TODO
+            for (var repo : pluginRepositoriesLegacy) {
+                pm.allow(repo.getUrl());
+            }
             return new Config(container, system, session, container.lookup(ProjectBuilder.class),
                     RepositoryUtils.toRepos(repositoriesLegacy), legacySystem.createLocalRepository(lr.getBasedir()), repositoriesLegacy, pluginRepositoriesLegacy);
         } catch (InvalidRepositoryException | ComponentLookupException e) {
@@ -319,33 +325,45 @@ public record Config(PlexusContainer container,
                                            List<ArtifactRepository> resultRepositories, List<ArtifactRepository> resultPluginRepositories)
             throws InvalidRepositoryException {
         boolean central;
+        boolean pluginCentral;
         List<String> actives;
-        ArtifactRepository artifactRepository;
 
         central = false;
+        pluginCentral = false;
         actives = settings.getActiveProfiles();
         for (Profile profile : settings.getProfiles()) {
             if (actives.contains(profile.getId()) || (profile.getActivation() != null && profile.getActivation().isActiveByDefault())) {
-                for (org.apache.maven.model.Repository repository : SettingsUtils.convertFromSettingsProfile(profile).getRepositories()) {
-                    artifactRepository = legacy.buildArtifactRepository(repository);
-                    if ("central".equals(artifactRepository.getId())) {
-                        central = true;
-                    }
-                    resultRepositories.add(artifactRepository);
-                }
-                for (org.apache.maven.model.Repository repository : SettingsUtils.convertFromSettingsProfile(profile).getPluginRepositories()) {
-                    artifactRepository = legacy.buildArtifactRepository(repository);
-                    resultPluginRepositories.add(artifactRepository);
-                }
+                var p = SettingsUtils.convertFromSettingsProfile(profile);
+                central = convert(legacy, p.getRepositories(), resultRepositories);
+                pluginCentral = convert(legacy, p.getPluginRepositories(), resultPluginRepositories);
             }
         }
+        /* Maven defines the default central repository in its master parent - and not in the default settings, which I'd prefer.
+           As a consequent, central is not always defined when loading the settings.
+           I first added central to repositories only, because legacy repositories are used to load poms which ultimatly load the
+           master parent with it's repository definition. However, the parent might have to be loaded from central, so repositories
+           also need a central definition. */
         if (!central) {
-            /* Maven defines the default central repository in its master parent - and not in the default settings, which I'd prefer.
-               As a consequent, central is not always defined when loading the settings.
-               I first added central to repositories only, because legacy repositories are used to load poms which ultimatly load the
-               master parent with it's repository definition. However, the parent might have to be loaded from central, so repositories
-               also need a central definition. */
             resultRepositories.add(legacy.createDefaultRemoteRepository());
         }
+        if (!pluginCentral) {
+            resultPluginRepositories.add(legacy.createDefaultRemoteRepository());
+        }
+    }
+
+    /** @return true if contral was included */
+    private static boolean convert(LegacyRepositorySystem legacy,  List<org.apache.maven.model.Repository> src, List<ArtifactRepository> dest) throws InvalidRepositoryException {
+        boolean central;
+        ArtifactRepository artifactRepository;
+
+        central = false;
+        for (org.apache.maven.model.Repository repository : src) {
+            artifactRepository = legacy.buildArtifactRepository(repository);
+            if ("central".equals(artifactRepository.getId())) {
+                central = true;
+            }
+            dest.add(artifactRepository);
+        }
+        return central;
     }
 }
