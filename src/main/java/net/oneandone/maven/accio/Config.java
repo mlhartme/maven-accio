@@ -92,9 +92,9 @@ public record Config(PlexusContainer container,
         LocalRepository lr;
 
         try {
-            RestrictedClassRealmManager pm = (RestrictedClassRealmManager) container.lookup(ClassRealmManager.class);
+            BlockingClassRealmManager pm = (BlockingClassRealmManager) container.lookup(ClassRealmManager.class);
             if (allowedExtensions != null) {
-                pm.restrict(allowedExtensions);
+                pm.allow(allowedExtensions);
             }
             try {
                 settings = loadSettings(globalSettings, userSettings, container);

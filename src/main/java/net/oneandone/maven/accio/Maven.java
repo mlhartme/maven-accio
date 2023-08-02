@@ -155,14 +155,14 @@ public class Maven implements AutoCloseable {
 
     public List<String> getLoadedExtensions() {
         try {
-            return ((RestrictedClassRealmManager) container.lookup(ClassRealmManager.class)).getLoadedExtensions();
+            return ((BlockingClassRealmManager) container.lookup(ClassRealmManager.class)).getAllowedExtensions();
         } catch (ComponentLookupException e) {
             throw new IllegalArgumentException(e);
         }
     }
     public List<String> getBlockedExtensions() {
         try {
-            return ((RestrictedClassRealmManager) container.lookup(ClassRealmManager.class)).getBlockedExtensions();
+            return ((BlockingClassRealmManager) container.lookup(ClassRealmManager.class)).getBlockedExtensions();
         } catch (ComponentLookupException e) {
             throw new IllegalArgumentException(e);
         }

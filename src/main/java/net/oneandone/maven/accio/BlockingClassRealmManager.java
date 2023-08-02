@@ -17,27 +17,27 @@ import java.util.Collections;
 import java.util.List;
 
 @Component(role = ClassRealmManager.class)
-public class RestrictedClassRealmManager extends DefaultClassRealmManager {
+public class BlockingClassRealmManager extends DefaultClassRealmManager {
     private final Logger logger;
-    private List<String> allowedGroupArtifacts;
-    private final List<String> loadedExtensions;
+    private final List<String> allowGroupArtifacts;
+    private final List<String> allowedExtensions;
     private final List<String> blockedExtensions;
 
     @Inject
-    public RestrictedClassRealmManager(Logger logger, PlexusContainer container, List<ClassRealmManagerDelegate> delegates, CoreExports exports) {
+    public BlockingClassRealmManager(Logger logger, PlexusContainer container, List<ClassRealmManagerDelegate> delegates, CoreExports exports) {
         super(logger, container, delegates, exports);
         this.logger = logger;
-        this.allowedGroupArtifacts = List.of();
-        this.loadedExtensions = new ArrayList<>();
+        this.allowGroupArtifacts = new ArrayList<>();
+        this.allowedExtensions = new ArrayList<>();
         this.blockedExtensions = new ArrayList<>();
     }
 
-    public void restrict(String... restricted) {
-        allowedGroupArtifacts = List.of(restricted);
+    public void allow(String... allow) {
+        allowGroupArtifacts.addAll(List.of(allow));
     }
 
-    public List<String> getLoadedExtensions() {
-        return loadedExtensions;
+    public List<String> getAllowedExtensions() {
+        return allowedExtensions;
     }
 
     public List<String> getBlockedExtensions() {
@@ -47,12 +47,12 @@ public class RestrictedClassRealmManager extends DefaultClassRealmManager {
     @Override
     public ClassRealm createExtensionRealm(Plugin plugin, List<Artifact> artifacts) {
         String gav = plugin.getGroupId() + ":" + plugin.getArtifactId() + ":" + plugin.getVersion();
-        if (allowedGroupArtifacts != null && !allowedGroupArtifacts.contains(plugin.getGroupId() + ":" + plugin.getArtifactId())) {
+        if (allowGroupArtifacts != null && !allowGroupArtifacts.contains(plugin.getGroupId() + ":" + plugin.getArtifactId())) {
             logger.warn("createExtensionRealm(" + plugin + ", WITHOUT_ARTIFACTS)");
             blockedExtensions.add(gav);
             return super.createExtensionRealm(plugin, Collections.emptyList());
         } else {
-            loadedExtensions.add(gav);
+            allowedExtensions.add(gav);
             logger.info("createExtensionRealm(" + plugin + "," + artifacts + ")");
             return super.createExtensionRealm(plugin, artifacts);
         }
