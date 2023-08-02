@@ -317,12 +317,8 @@ public class MavenTest {
 
     @Test
     public void pluginExtensionRejected() throws ProjectBuildingException {
-        try {
-            maven.loadPom(file("src/test/with-plugin-extension.pom"));
-            fail();
-        } catch (IllegalArgumentException e) {
-            assertTrue(e.toString(), e.toString().contains("extension forbidden"));
-        }
+        MavenProject pom = maven.loadPom(file("src/test/with-plugin-extension.pom"));
+        assertEquals(List.of("org.apache.felix:maven-bundle-plugin:4.2.1"), maven.getBlockedExtensions());
     }
 
     @Test
@@ -330,16 +326,14 @@ public class MavenTest {
         Maven m = new Maven(Config.create(null, null, null, "org.apache.felix:maven-bundle-plugin"));
         MavenProject pom = m.loadPom(file("src/test/with-plugin-extension.pom"));
         assertEquals("true", pom.getModel().getBuild().getPluginsAsMap().get("org.apache.felix:maven-bundle-plugin").getExtensions());
+        assertEquals(List.of(), maven.getBlockedExtensions());
     }
 
     @Test
     public void buildExtensionRejected() throws ProjectBuildingException {
-        try {
-            maven.loadPom(file("src/test/with-build-extension.pom"));
-            fail();
-        } catch (IllegalArgumentException e) {
-            assertTrue(e.toString(), e.toString().contains("extension forbidden"));
-        }
+        MavenProject pom = maven.loadPom(file("src/test/with-build-extension.pom"));
+        assertEquals(1, pom.getModel().getBuild().getExtensions().size());
+        assertEquals(List.of("org.apache.felix:maven-bundle-plugin:4.2.1"), maven.getBlockedExtensions());
     }
 
     @Test
@@ -347,6 +341,7 @@ public class MavenTest {
         Maven m = new Maven(Config.create(null, null, null, "org.apache.felix:maven-bundle-plugin"));
         MavenProject pom = m.loadPom(file("src/test/with-build-extension.pom"));
         assertEquals(1, pom.getModel().getBuild().getExtensions().size());
+        assertEquals(List.of(), maven.getBlockedExtensions());
     }
 
     //-- multi module

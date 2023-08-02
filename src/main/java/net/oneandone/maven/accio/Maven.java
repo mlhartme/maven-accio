@@ -18,12 +18,14 @@ package net.oneandone.maven.accio;
 import org.apache.maven.artifact.repository.ArtifactRepository;
 import org.apache.maven.artifact.repository.metadata.GroupRepositoryMetadata;
 import org.apache.maven.artifact.repository.metadata.MetadataBridge;
+import org.apache.maven.classrealm.ClassRealmManager;
 import org.apache.maven.project.DefaultProjectBuildingRequest;
 import org.apache.maven.project.MavenProject;
 import org.apache.maven.project.ProjectBuilder;
 import org.apache.maven.project.ProjectBuildingException;
 import org.apache.maven.project.ProjectBuildingResult;
 import org.codehaus.plexus.PlexusContainer;
+import org.codehaus.plexus.component.repository.exception.ComponentLookupException;
 import org.eclipse.aether.DefaultRepositorySystemSession;
 import org.eclipse.aether.RepositoryException;
 import org.eclipse.aether.RepositorySystem;
@@ -149,6 +151,14 @@ public class Maven implements AutoCloseable {
     public MavenProject loadPom(File file, boolean resolve, Properties userProperties, List<String> profiles)
             throws ProjectBuildingException {
         return loadAllPoms(false, file, resolve, userProperties, profiles).get(0);
+    }
+
+    public List<String> getBlockedExtensions() {
+        try {
+            return ((RestrictedClassRealmManager) container.lookup(ClassRealmManager.class)).getBlockedExtensions();
+        } catch (ComponentLookupException e) {
+            throw new IllegalArgumentException(e);
+        }
     }
 
     public List<MavenProject> loadAllPoms(boolean recursive, File file, boolean resolve,  Properties userProperties, List<String> profiles)
