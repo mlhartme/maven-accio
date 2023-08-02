@@ -18,7 +18,7 @@ package net.oneandone.maven.accio;
 import org.apache.maven.RepositoryUtils;
 import org.apache.maven.artifact.InvalidRepositoryException;
 import org.apache.maven.artifact.repository.ArtifactRepository;
-import org.apache.maven.plugin.MavenPluginManager;
+import org.apache.maven.classrealm.ClassRealmManager;
 import org.apache.maven.project.ProjectBuilder;
 import org.apache.maven.repository.internal.MavenRepositorySystemUtils;
 import org.apache.maven.repository.legacy.LegacyRepositorySystem;
@@ -92,7 +92,7 @@ public record Config(PlexusContainer container,
         LocalRepository lr;
 
         try {
-            RestrictedMavenPluginManager pm = (RestrictedMavenPluginManager) container.lookup(MavenPluginManager.class);
+            RestrictedClassRealmManager pm = (RestrictedClassRealmManager) container.lookup(ClassRealmManager.class);
             if (allowedExtensions != null) {
                 pm.restrict(allowedExtensions);
             }
@@ -237,8 +237,9 @@ public record Config(PlexusContainer container,
         if (realm != null) {
             config.setRealm(realm);
         }
-        config.setAutoWiring(true);
         config.setClassPathScanning(PlexusConstants.SCANNING_INDEX);
+        config.setAutoWiring(true);
+        config.setJSR250Lifecycle(true);
         try {
             container = new DefaultPlexusContainer(config);
         } catch (PlexusContainerException e) {

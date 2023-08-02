@@ -316,11 +316,11 @@ public class MavenTest {
     //-- extensions
 
     @Test
-    public void pluginExtensionRejected() {
+    public void pluginExtensionRejected() throws ProjectBuildingException {
         try {
             maven.loadPom(file("src/test/with-plugin-extension.pom"));
             fail();
-        } catch (ProjectBuildingException e) {
+        } catch (IllegalArgumentException e) {
             assertTrue(e.toString(), e.toString().contains("extension forbidden"));
         }
     }
@@ -333,11 +333,11 @@ public class MavenTest {
     }
 
     @Test
-    public void buildExtensionRejected() {
+    public void buildExtensionRejected() throws ProjectBuildingException {
         try {
             maven.loadPom(file("src/test/with-build-extension.pom"));
             fail();
-        } catch (ProjectBuildingException e) {
+        } catch (IllegalArgumentException e) {
             assertTrue(e.toString(), e.toString().contains("extension forbidden"));
         }
     }

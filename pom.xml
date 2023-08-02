@@ -129,6 +129,7 @@
     </dependency>
   </dependencies>
   <build>
+    <!-- TODO: this is to be replaced by  org.eclipse.sisu:sisu-maven-plugin:main-index, but I didn't succeed replacing @Component annotations with @Name @singleton ... -->
     <plugins>
       <plugin>
         <groupId>org.codehaus.plexus</groupId>
