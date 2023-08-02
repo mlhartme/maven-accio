@@ -20,6 +20,7 @@ import java.util.List;
 public class RestrictedClassRealmManager extends DefaultClassRealmManager {
     private final Logger logger;
     private List<String> allowedGroupArtifacts;
+    private final List<String> loadedExtensions;
     private final List<String> blockedExtensions;
 
     @Inject
@@ -27,11 +28,16 @@ public class RestrictedClassRealmManager extends DefaultClassRealmManager {
         super(logger, container, delegates, exports);
         this.logger = logger;
         this.allowedGroupArtifacts = null;
+        this.loadedExtensions = new ArrayList<>();
         this.blockedExtensions = new ArrayList<>();
     }
 
     public void restrict(String... restricted) {
         allowedGroupArtifacts = List.of(restricted);
+    }
+
+    public List<String> getLoadedExtensions() {
+        return loadedExtensions;
     }
 
     public List<String> getBlockedExtensions() {
@@ -46,6 +52,7 @@ public class RestrictedClassRealmManager extends DefaultClassRealmManager {
             blockedExtensions.add(gav);
             return super.createExtensionRealm(plugin, Collections.emptyList());
         } else {
+            loadedExtensions.add(gav);
             logger.info("createExtensionRealm(" + plugin + "," + artifacts + ")");
             return super.createExtensionRealm(plugin, artifacts);
         }

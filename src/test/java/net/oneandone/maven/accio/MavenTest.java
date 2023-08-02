@@ -315,10 +315,14 @@ public class MavenTest {
 
     //-- extensions
 
+    private static final String EXTENSION_GAV = "org.apache.felix:maven-bundle-plugin:4.2.1";
+
     @Test
-    public void pluginExtensionRejected() throws ProjectBuildingException {
+    public void pluginExtensionBlocked() throws ProjectBuildingException {
         MavenProject pom = maven.loadPom(file("src/test/with-plugin-extension.pom"));
-        assertEquals(List.of("org.apache.felix:maven-bundle-plugin:4.2.1"), maven.getBlockedExtensions());
+        assertEquals("true", pom.getModel().getBuild().getPluginsAsMap().get("org.apache.felix:maven-bundle-plugin").getExtensions());
+        assertEquals(List.of(), maven.getLoadedExtensions());
+        assertEquals(List.of(EXTENSION_GAV), maven.getBlockedExtensions());
     }
 
     @Test
@@ -326,14 +330,16 @@ public class MavenTest {
         Maven m = new Maven(Config.create(null, null, null, "org.apache.felix:maven-bundle-plugin"));
         MavenProject pom = m.loadPom(file("src/test/with-plugin-extension.pom"));
         assertEquals("true", pom.getModel().getBuild().getPluginsAsMap().get("org.apache.felix:maven-bundle-plugin").getExtensions());
-        assertEquals(List.of(), maven.getBlockedExtensions());
+        assertEquals(List.of(EXTENSION_GAV), m.getLoadedExtensions());
+        assertEquals(List.of(), m.getBlockedExtensions());
     }
 
     @Test
-    public void buildExtensionRejected() throws ProjectBuildingException {
+    public void buildExtensionBlocked() throws ProjectBuildingException {
         MavenProject pom = maven.loadPom(file("src/test/with-build-extension.pom"));
         assertEquals(1, pom.getModel().getBuild().getExtensions().size());
-        assertEquals(List.of("org.apache.felix:maven-bundle-plugin:4.2.1"), maven.getBlockedExtensions());
+        assertEquals(List.of(), maven.getLoadedExtensions());
+        assertEquals(List.of(EXTENSION_GAV), maven.getBlockedExtensions());
     }
 
     @Test
@@ -341,7 +347,8 @@ public class MavenTest {
         Maven m = new Maven(Config.create(null, null, null, "org.apache.felix:maven-bundle-plugin"));
         MavenProject pom = m.loadPom(file("src/test/with-build-extension.pom"));
         assertEquals(1, pom.getModel().getBuild().getExtensions().size());
-        assertEquals(List.of(), maven.getBlockedExtensions());
+        assertEquals(List.of(EXTENSION_GAV), m.getLoadedExtensions());
+        assertEquals(List.of(), m.getBlockedExtensions());
     }
 
     //-- multi module
