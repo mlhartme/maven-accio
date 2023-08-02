@@ -22,6 +22,7 @@ public class RejectingMavenPluginManager extends DefaultMavenPluginManager {
     @Override
     public ExtensionRealmCache.CacheRecord setupExtensionsRealm(
             MavenProject project, Plugin plugin, RepositorySystemSession session) throws PluginManagerException {
+        // getPluginRepositories yields the effective pom repositories AND the repositories from the effective settings!
         for (var repo : project.getPluginRepositories()) {
             if (!allowed.contains(repo.getUrl())) {
                 throw new IllegalArgumentException("repository url rejected: " + repo.getUrl());
