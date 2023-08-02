@@ -94,6 +94,14 @@ public class MavenTest {
     //--
 
     @Test
+    public void pluginRepositories() throws ProjectBuildingException {
+        MavenProject pom = maven.loadPom(file("src/test/with-plugin-repository.pom"));
+        assertEquals(List.of("extra", "central"), pom.getPluginRepositories().stream().map(repository -> repository.getId()).toList());
+    }
+
+    //--
+
+    @Test
     public void resolveRelease() throws Exception {
         assertTrue(maven.resolve(JAR).isFile());
     }
