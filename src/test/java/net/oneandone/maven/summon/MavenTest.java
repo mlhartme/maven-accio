@@ -87,12 +87,12 @@ public class MavenTest {
         maven.close();
     }
 
-    //--
+    //-- plugin repositories
 
     @Test
     public void pluginRepositories() throws ProjectBuildingException {
         try {
-            MavenProject pom = maven.loadPom(file("src/test/with-plugin-repository.pom"));
+            maven.loadPom(file("src/test/with-plugin-repository.pom"));
             fail();
         } catch (IllegalArgumentException e) {
             assertTrue(e.getMessage(), e.getMessage().contains("rejected"));
@@ -100,6 +100,16 @@ public class MavenTest {
         }
     }
 
+    @Test
+    public void pluginRepositoriesInParent() throws ProjectBuildingException {
+        try {
+            maven.loadPom(file("src/test/multi-with-plugin-repository/child/pom.xml"));
+            fail();
+        } catch (IllegalArgumentException e) {
+            assertTrue(e.getMessage(), e.getMessage().contains("rejected"));
+            assertTrue(e.getMessage(), e.getMessage().contains("https://some.extra.repo/"));
+        }
+    }
     //--
 
     @Test
@@ -317,15 +327,6 @@ public class MavenTest {
     //-- extensions
 
     private static final String EXTENSION_GAV = "org.apache.felix:maven-bundle-plugin:4.2.1";
-
-    /*
-    @Test
-    public void todo() throws ProjectBuildingException, IOException {
-        maven = new Maven(Config.create(null, null, null, "com.unitedinternet.portal.maven2.pom:portalpom3-configs"));
-        MavenProject pom = maven.loadPom(new File("/Users/mhm/Projects/git.mam.dev/mamido/java/user-janitor/pom.xml"));
-        assertEquals(List.of("com.unitedinternet.portal.maven2.pom:portalpom3-configs:1.74"), maven.getLoadedExtensions());
-        assertEquals(List.of(), maven.getBlockedExtensions());
-    }*/
 
     @Test
     public void pluginExtensionBlocked() throws ProjectBuildingException {

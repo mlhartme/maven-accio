@@ -19,8 +19,8 @@ import org.apache.maven.RepositoryUtils;
 import org.apache.maven.artifact.InvalidRepositoryException;
 import org.apache.maven.artifact.repository.ArtifactRepository;
 import org.apache.maven.classrealm.ClassRealmManager;
-import org.apache.maven.plugin.MavenPluginManager;
 import org.apache.maven.project.ProjectBuilder;
+import org.apache.maven.project.ProjectBuildingHelper;
 import org.apache.maven.repository.internal.MavenRepositorySystemUtils;
 import org.apache.maven.repository.legacy.LegacyRepositorySystem;
 import org.apache.maven.settings.Mirror;
@@ -112,7 +112,7 @@ public record Config(PlexusContainer container,
             legacySystem.injectAuthentication(session, repositoriesLegacy);
             legacySystem.injectMirror(session, repositoriesLegacy);
             legacySystem.injectProxy(session, repositoriesLegacy);
-            PluginRepositoryBlocker pm = (PluginRepositoryBlocker) container.lookup(MavenPluginManager.class);
+            PluginRepositoryBlocker pm = (PluginRepositoryBlocker) container.lookup(ProjectBuildingHelper.class);
             for (var repo : pluginRepositoriesLegacy) {
                 pm.allow(repo.getUrl());
             }

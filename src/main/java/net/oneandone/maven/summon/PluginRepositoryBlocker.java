@@ -1,25 +1,27 @@
 package net.oneandone.maven.summon;
 
-import org.apache.maven.model.Plugin;
-import org.apache.maven.plugin.ExtensionRealmCache;
-import org.apache.maven.plugin.MavenPluginManager;
+import org.apache.maven.model.Model;
 import org.apache.maven.plugin.PluginManagerException;
-import org.apache.maven.plugin.internal.DefaultMavenPluginManager;
+import org.apache.maven.plugin.PluginResolutionException;
+import org.apache.maven.plugin.version.PluginVersionResolutionException;
+import org.apache.maven.project.DefaultProjectBuildingHelper;
 import org.apache.maven.project.MavenProject;
+import org.apache.maven.project.ProjectBuildingHelper;
+import org.apache.maven.project.ProjectBuildingRequest;
+import org.apache.maven.project.ProjectRealmCache;
 import org.codehaus.plexus.component.annotations.Component;
-import org.eclipse.aether.RepositorySystemSession;
 
 import java.util.ArrayList;
 import java.util.List;
 
-@Component(role = MavenPluginManager.class)
-public class PluginRepositoryBlocker extends DefaultMavenPluginManager {
+@Component(role = ProjectBuildingHelper.class)
+public class PluginRepositoryBlocker extends DefaultProjectBuildingHelper {
     private List<String> allowUrls;
 
     public PluginRepositoryBlocker() {
         this.allowUrls = new ArrayList<>();
         addAllowProperty();
-        // TODO: add a "created" log stagement here, but I was unable to get an logger injected ...
+        // TODO: add a "created" log statement here, but I was unable to get an logger injected ...
 
     }
 
@@ -39,16 +41,14 @@ public class PluginRepositoryBlocker extends DefaultMavenPluginManager {
     }
 
     @Override
-    public ExtensionRealmCache.CacheRecord setupExtensionsRealm(
-            MavenProject project, Plugin plugin, RepositorySystemSession session) throws PluginManagerException {
-        // getPluginRepositories normally yields the effective pom repositories AND the repositories from the effective settings!
-        // but at this point in parsing, we don't have the effective pom yet. So the DefaultMavenPluginManager uses getRemotePluginRepositories
+    public synchronized ProjectRealmCache.CacheRecord createProjectRealm(
+            MavenProject project, Model model, ProjectBuildingRequest request)
+            throws PluginResolutionException, PluginVersionResolutionException, PluginManagerException {
         for (var repo : project.getRemotePluginRepositories()) {
             if (!allowUrls.contains(repo.getUrl())) {
                 throw new IllegalArgumentException("repository url rejected: " + repo.getUrl() + "\nAllowed: " + allowUrls);
             }
         }
-        return super.setupExtensionsRealm(project, plugin, session);
+        return super.createProjectRealm(project, model, request);
     }
-
 }
