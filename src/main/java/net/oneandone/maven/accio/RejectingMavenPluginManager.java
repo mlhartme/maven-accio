@@ -14,17 +14,13 @@ import java.util.List;
 
 @Component(role = MavenPluginManager.class)
 public class RejectingMavenPluginManager extends DefaultMavenPluginManager {
-    private final String logPrefix;
-
     private List<String> allowUrls;
 
     public RejectingMavenPluginManager() {
-        super();
-        this.logPrefix = getClass().getSimpleName() + ":";
         this.allowUrls = new ArrayList<>();
         addAllowProperty();
-        // TODO
-        System.out.println(logPrefix + "initialized, allow " + allowUrls);
+        // TODO: add a "created" log stagement here, but I was unable to get an logger injected ...
+
     }
 
     public void addAllowProperty() {
@@ -49,7 +45,7 @@ public class RejectingMavenPluginManager extends DefaultMavenPluginManager {
         // but at this point in parsing, we don't have the effective pom yet. So the DefaultMavenPluginManager uses getRemotePluginRepositories
         for (var repo : project.getRemotePluginRepositories()) {
             if (!allowUrls.contains(repo.getUrl())) {
-                throw new IllegalArgumentException("repository url rejected: " + repo.getUrl());
+                throw new IllegalArgumentException("repository url rejected: " + repo.getUrl() + "\nAllowed: " + allowUrls);
             }
         }
         return super.setupExtensionsRealm(project, plugin, session);
