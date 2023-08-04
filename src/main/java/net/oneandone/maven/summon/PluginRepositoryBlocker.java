@@ -45,7 +45,7 @@ public class PluginRepositoryBlocker extends DefaultProjectBuildingHelper {
     public synchronized ProjectRealmCache.CacheRecord createProjectRealm(
             MavenProject project, Model model, ProjectBuildingRequest request)
             throws PluginResolutionException, PluginVersionResolutionException, PluginManagerException {
-        // TODO: getRemotePluginRepositories does not include projects in the model ...
+        // TODO: getRemotePluginRepositories does not include projects in the model when called are a core extension ...
         for (var repo : project.getModel().getPluginRepositories()) {
             if (!allowUrls.contains(repo.getUrl())) {
                 throw new IllegalArgumentException("repository url blocked: " + repo.getUrl() + "\nAllowed: " + allowUrls);
