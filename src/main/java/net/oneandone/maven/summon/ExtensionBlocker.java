@@ -16,6 +16,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+/** Blocks build- and plugin extensions from being loaded. It simply created an empty class realm for them. */
 @Component(role = ClassRealmManager.class)
 public class ExtensionBlocker extends DefaultClassRealmManager {
     private final Logger logger;
