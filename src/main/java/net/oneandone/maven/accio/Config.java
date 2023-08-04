@@ -95,7 +95,7 @@ public record Config(PlexusContainer container,
         try {
             BlockingClassRealmManager rm = (BlockingClassRealmManager) container.lookup(ClassRealmManager.class);
             if (allowExtensions != null) {
-                rm.allow(allowExtensions);
+                rm.getAllowArtifacts().addAll(List.of(allowExtensions));
             }
             try {
                 settings = loadSettings(globalSettings, userSettings, container);

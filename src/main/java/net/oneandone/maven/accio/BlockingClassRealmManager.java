@@ -32,11 +32,23 @@ public class BlockingClassRealmManager extends DefaultClassRealmManager {
         this.allowedExtensions = new ArrayList<>();
         this.blockedExtensions = new ArrayList<>();
         this.logPrefix = getClass().getSimpleName() + ": ";
-        logger.info(logPrefix + "created");
+        addAllowProperty();
+        logger.info(logPrefix + "created, allow " + allowGroupArtifacts);
     }
 
-    public void allow(String... allow) {
-        allowGroupArtifacts.addAll(List.of(allow));
+    public void addAllowProperty() {
+        String property = System.getProperty(getClass().getName() + ":allow");
+        if (property != null) {
+            for (String entry : property.split(",")) {
+                if (!entry.isBlank()) {
+                    allowGroupArtifacts.add(entry.trim());
+                }
+            }
+        }
+    }
+
+    public List<String> getAllowArtifacts() {
+        return allowGroupArtifacts;
     }
 
     public List<String> getAllowedExtensions() {
