@@ -20,6 +20,7 @@ public class PluginRepositoryBlocker extends DefaultProjectBuildingHelper {
 
     public PluginRepositoryBlocker() {
         this.allowUrls = new ArrayList<>();
+        allowUrls.add("https://repo.maven.apache.org/maven2"); // TODO
         addAllowProperty();
         // TODO: add a "created" log statement here, but I was unable to get an logger injected ...
 
@@ -44,10 +45,12 @@ public class PluginRepositoryBlocker extends DefaultProjectBuildingHelper {
     public synchronized ProjectRealmCache.CacheRecord createProjectRealm(
             MavenProject project, Model model, ProjectBuildingRequest request)
             throws PluginResolutionException, PluginVersionResolutionException, PluginManagerException {
-        for (var repo : project.getRemotePluginRepositories()) {
+        // TODO: getRemotePluginRepositories does not include projects in the model ...
+        for (var repo : project.getModel().getPluginRepositories()) {
             if (!allowUrls.contains(repo.getUrl())) {
-                throw new IllegalArgumentException("repository url rejected: " + repo.getUrl() + "\nAllowed: " + allowUrls);
+                throw new IllegalArgumentException("repository url blocked: " + repo.getUrl() + "\nAllowed: " + allowUrls);
             }
+            System.out.println("plugin-repo-blocker ok: " + repo.getUrl() + " " + repo.getId() + " " + repo.hashCode());
         }
         return super.createProjectRealm(project, model, request);
     }

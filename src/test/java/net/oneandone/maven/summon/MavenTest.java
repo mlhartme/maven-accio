@@ -95,7 +95,7 @@ public class MavenTest {
             maven.loadPom(file("src/test/with-plugin-repository.pom"));
             fail();
         } catch (IllegalArgumentException e) {
-            assertTrue(e.getMessage(), e.getMessage().contains("rejected"));
+            assertTrue(e.getMessage(), e.getMessage().contains("blocked"));
             assertTrue(e.getMessage(), e.getMessage().contains("https://some.extra.repo/"));
         }
     }
@@ -106,7 +106,7 @@ public class MavenTest {
             maven.loadPom(file("src/test/multi-with-plugin-repository/child/pom.xml"));
             fail();
         } catch (IllegalArgumentException e) {
-            assertTrue(e.getMessage(), e.getMessage().contains("rejected"));
+            assertTrue(e.getMessage(), e.getMessage().contains("blocked"));
             assertTrue(e.getMessage(), e.getMessage().contains("https://some.extra.repo/"));
         }
     }
