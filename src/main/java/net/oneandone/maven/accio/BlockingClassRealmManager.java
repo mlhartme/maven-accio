@@ -22,6 +22,7 @@ public class BlockingClassRealmManager extends DefaultClassRealmManager {
     private final List<String> allowGroupArtifacts;
     private final List<String> allowedExtensions;
     private final List<String> blockedExtensions;
+    private final String logPrefix;
 
     @Inject
     public BlockingClassRealmManager(Logger logger, PlexusContainer container, List<ClassRealmManagerDelegate> delegates, CoreExports exports) {
@@ -30,6 +31,8 @@ public class BlockingClassRealmManager extends DefaultClassRealmManager {
         this.allowGroupArtifacts = new ArrayList<>();
         this.allowedExtensions = new ArrayList<>();
         this.blockedExtensions = new ArrayList<>();
+        this.logPrefix = getClass().getSimpleName() + ": ";
+        logger.info(logPrefix + "created");
     }
 
     public void allow(String... allow) {
@@ -48,12 +51,12 @@ public class BlockingClassRealmManager extends DefaultClassRealmManager {
     public ClassRealm createExtensionRealm(Plugin plugin, List<Artifact> artifacts) {
         String gav = plugin.getGroupId() + ":" + plugin.getArtifactId() + ":" + plugin.getVersion();
         if (allowGroupArtifacts != null && !allowGroupArtifacts.contains(plugin.getGroupId() + ":" + plugin.getArtifactId())) {
-            logger.warn("createExtensionRealm(" + plugin + ", WITHOUT_ARTIFACTS)");
+            logger.warn(logPrefix + "blocked extension " + gav);
             blockedExtensions.add(gav);
             return super.createExtensionRealm(plugin, Collections.emptyList());
         } else {
             allowedExtensions.add(gav);
-            logger.info("createExtensionRealm(" + plugin + "," + artifacts + ")");
+            logger.info(logPrefix + "allowed extension " + gav);
             return super.createExtensionRealm(plugin, artifacts);
         }
     }
