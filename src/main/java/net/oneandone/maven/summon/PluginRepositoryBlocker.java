@@ -1,4 +1,4 @@
-package net.oneandone.maven.accio;
+package net.oneandone.maven.summon;
 
 import org.apache.maven.model.Plugin;
 import org.apache.maven.plugin.ExtensionRealmCache;

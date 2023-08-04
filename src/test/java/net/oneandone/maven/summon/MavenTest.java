@@ -13,14 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package net.oneandone.maven.accio;
+package net.oneandone.maven.summon;
 
 import org.apache.maven.model.Model;
 import org.apache.maven.model.Plugin;
 import org.apache.maven.model.PluginExecution;
-import org.apache.maven.model.building.ModelBuildingException;
-import org.apache.maven.plugin.MavenPluginManager;
-import org.apache.maven.plugin.PluginManagerException;
 import org.apache.maven.project.MavenProject;
 import org.apache.maven.project.ProjectBuildingException;
 import org.eclipse.aether.RepositoryException;
@@ -37,7 +34,6 @@ import org.eclipse.aether.version.Version;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
-import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -136,7 +132,7 @@ public class MavenTest {
         Map<String, Object> executions;
 
         pom = maven.loadPom(file("pom.xml"));
-        assertEquals("accio", pom.getArtifactId());
+        assertEquals("summon", pom.getArtifactId());
 
         // check that we see the effective pom
         executions = executions(pom.getModel());

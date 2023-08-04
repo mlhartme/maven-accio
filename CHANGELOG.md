@@ -7,9 +7,10 @@
 
 ### 4.0.0 (pending)
 
-* renamed to Maven Accio
+* renamed to Maven Summon
 * Maven is AutoClosable now, close() invokes container.dispose() to fix memory leak
-* added BlockingClassRealmManager that can block extension classes/resources being loaded; default is to block all
+* added PluginRepositoryBlocker
+* added ExtensionBlocker that can block extension classes/resources being loaded; default is to block all
 * Maven.loadPom 
   * added support to load projects recursively
   * removed dependencies out argument - use MavenProject.getArtifacts() instead
@@ -127,4 +128,4 @@
 
 
 
-(see https://github.com/mlhartme/maven-accio/blob/embedded-3.8.0/src/changes/changes.xml for older logs)
+(see https://github.com/mlhartme/maven-summon/blob/embedded-3.8.0/src/changes/changes.xml for older logs)
