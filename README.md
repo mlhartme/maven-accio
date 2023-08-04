@@ -1,7 +1,7 @@
 # Maven Summon
 
-Maven Summon can resolve artifacts from Maven repositories and load Maven poms files. It provides a simple api 
-for use in Java code, it does not include a command line interface.
+Maven Summon is a library to resolve artifacts from Maven repositories and load Maven poms files. It provides a 
+simple api for use in Java code, it does not include a command line interface.
 
 Summon is kind of a stripped-down Maven for "read-only" functionality, it does not execute any build phases, 
 plugins or extensions, Technically, it uses the original Maven Libraries to resolve artifacts and load poms, 
@@ -15,6 +15,10 @@ neither core extensions, nor plugin extensions, nor build extensions.
 
 Technically, Maven adds extensions to the class loader via ClassRealmManager.createExtensionRealm(). Summon wraps 
 this with its ExtensionBlocker component to restrict class loading appropriately.
+
+ExtensionBlocker can allow extensions by groupId+artifactId to be loaded, the version is intenionally not fixed. 
+However, attackers could use this provide their own version and make it available by configuring a plugin repoistory. 
+Summon's PluginRepositoryBlocker is used to block this.
 
 Additionally, Maven instantiates extension Objects in [DefaulMaven.getLifecycleParticipants()](https://github.com/apache/maven/blob/21122926829f1ead511c958d89bd2f672198ae9f/maven-core/src/main/java/org/apache/maven/DefaultMaven.java#L327C5-L327C5).
 Summon does not run this code.
