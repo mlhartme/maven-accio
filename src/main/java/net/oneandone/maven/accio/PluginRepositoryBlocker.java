@@ -13,10 +13,10 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Component(role = MavenPluginManager.class)
-public class RejectingMavenPluginManager extends DefaultMavenPluginManager {
+public class PluginRepositoryBlocker extends DefaultMavenPluginManager {
     private List<String> allowUrls;
 
-    public RejectingMavenPluginManager() {
+    public PluginRepositoryBlocker() {
         this.allowUrls = new ArrayList<>();
         addAllowProperty();
         // TODO: add a "created" log stagement here, but I was unable to get an logger injected ...

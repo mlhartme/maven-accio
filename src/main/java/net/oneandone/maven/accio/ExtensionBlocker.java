@@ -17,7 +17,7 @@ import java.util.Collections;
 import java.util.List;
 
 @Component(role = ClassRealmManager.class)
-public class BlockingClassRealmManager extends DefaultClassRealmManager {
+public class ExtensionBlocker extends DefaultClassRealmManager {
     private final Logger logger;
     private final List<String> allowGroupArtifacts;
     private final List<String> allowedExtensions;
@@ -25,7 +25,7 @@ public class BlockingClassRealmManager extends DefaultClassRealmManager {
     private final String logPrefix;
 
     @Inject
-    public BlockingClassRealmManager(Logger logger, PlexusContainer container, List<ClassRealmManagerDelegate> delegates, CoreExports exports) {
+    public ExtensionBlocker(Logger logger, PlexusContainer container, List<ClassRealmManagerDelegate> delegates, CoreExports exports) {
         super(logger, container, delegates, exports);
         this.logger = logger;
         this.allowGroupArtifacts = new ArrayList<>();

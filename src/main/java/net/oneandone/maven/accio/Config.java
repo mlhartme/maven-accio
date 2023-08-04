@@ -93,7 +93,7 @@ public record Config(PlexusContainer container,
         LocalRepository lr;
 
         try {
-            BlockingClassRealmManager rm = (BlockingClassRealmManager) container.lookup(ClassRealmManager.class);
+            ExtensionBlocker rm = (ExtensionBlocker) container.lookup(ClassRealmManager.class);
             if (allowExtensions != null) {
                 rm.getAllowArtifacts().addAll(List.of(allowExtensions));
             }
@@ -112,7 +112,7 @@ public record Config(PlexusContainer container,
             legacySystem.injectAuthentication(session, repositoriesLegacy);
             legacySystem.injectMirror(session, repositoriesLegacy);
             legacySystem.injectProxy(session, repositoriesLegacy);
-            RejectingMavenPluginManager pm = (RejectingMavenPluginManager) container.lookup(MavenPluginManager.class);
+            PluginRepositoryBlocker pm = (PluginRepositoryBlocker) container.lookup(MavenPluginManager.class);
             for (var repo : pluginRepositoriesLegacy) {
                 pm.allow(repo.getUrl());
             }
