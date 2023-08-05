@@ -3,6 +3,8 @@
 ### TODO
 
 * dump compat dependency when Maven's (Dwfault)ProjectBuilderRequest removed ArtifactRepository from it's ProjectBuilderingRequest.
+* support for Maven 4
+  *  settings can define repositories outside of profiles
 
 
 ### 4.0.0 (pending)
