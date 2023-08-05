@@ -9,6 +9,18 @@ but omits the execution stuff.
 
 ## Security
 
+Caution, TODO: Maven [documentation](https://maven.apache.org/guides/mini/guide-multiple-repositories.html) 
+states that repositories in settings have precedence over pom repositories, but that's wrong: define a pom with 
+
+      <repositories>
+        <repository>
+          <id>extra</id>
+          <url>https://some.other.central.repo/</url>
+        </repository>
+      </repositories>
+    
+and run "mvn help:effective-pom", you'll see that the built-in central repository is overwritten.
+
 Loading a poms with Maven has a security problem because poms can inject code via extensions.
 Loading poms with Summon is considered save because it does load extensions -
 neither core extensions, nor plugin extensions, nor build extensions.
