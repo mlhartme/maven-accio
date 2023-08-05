@@ -28,7 +28,7 @@ public class PomRepositoryBlocker extends DefaultProjectBuildingHelper {
         this.allowedRepositories = new ArrayList<>();
         this.blockedRepositories = new ArrayList<>();
         addAllowProperty();
-        allowUrls.add(ModernRepositories.CENTRAL_URL); // TODO
+        allowUrls.add("https://repo.maven.apache.org/maven2"); // TODO
         // TODO: add a "created" log statement here, but I was unable to get an logger injected ...
 
     }

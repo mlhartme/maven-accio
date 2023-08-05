@@ -145,7 +145,7 @@ public class MavenTest {
         Map<String, Object> executions;
 
         pom = maven.loadPom(file("pom.xml"));
-        assertEquals("summon", pom.getArtifactId());
+        assertEquals("api", pom.getArtifactId());
 
         // check that we see the effective pom
         executions = executions(pom.getModel());
