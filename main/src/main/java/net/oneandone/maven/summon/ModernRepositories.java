@@ -11,11 +11,6 @@ import org.apache.maven.settings.Profile;
 import org.apache.maven.settings.Server;
 import org.apache.maven.settings.Settings;
 import org.apache.maven.settings.SettingsUtils;
-import org.apache.maven.settings.building.DefaultSettingsBuilder;
-import org.apache.maven.settings.building.DefaultSettingsBuildingRequest;
-import org.apache.maven.settings.building.SettingsBuilder;
-import org.apache.maven.settings.building.SettingsBuildingException;
-import org.apache.maven.settings.building.SettingsBuildingRequest;
 import org.codehaus.plexus.PlexusContainer;
 import org.codehaus.plexus.component.repository.exception.ComponentLookupException;
 import org.eclipse.aether.DefaultRepositorySystemSession;
@@ -38,19 +33,14 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * Represents configuration with settings and local configuration.
- */
-public record Repositories(Settings settings,
-                           DefaultRepositorySystem repositorySystem, RepositorySystemSession repositorySession,
-                           DefaultProjectBuilder projectBuilder,
-                           List<RemoteRepository> repositories, List<RemoteRepository> pluginRepositories) {
-    public static Repositories create(PlexusContainer container, File localRepository, File globalSettings, File userSettings,
-                               List<String> allowExtensions, List<String> allowPomRepositories,
-                               TransferListener transferListener, RepositoryListener repositoryListener) throws IOException {
+public record ModernRepositories(DefaultRepositorySystem repositorySystem, RepositorySystemSession repositorySession,
+                                 DefaultProjectBuilder projectBuilder,
+                                 List<RemoteRepository> repositories, List<RemoteRepository> pluginRepositories) {
+    public static ModernRepositories create(PlexusContainer container, Settings settings, File localRepository,
+                                            List<String> allowExtensions, List<String> allowPomRepositories,
+                                            TransferListener transferListener, RepositoryListener repositoryListener) throws IOException {
         DefaultRepositorySystem system;
         DefaultRepositorySystemSession session;
-        Settings settings;
         List<RemoteRepository> repositories;
         List<RemoteRepository> pluginRepositories;
 
@@ -59,7 +49,6 @@ public record Repositories(Settings settings,
             if (allowExtensions != null) {
                 rm.getAllowArtifacts().addAll(allowExtensions);
             }
-            settings = loadSettings(globalSettings, userSettings, container);
             system = (DefaultRepositorySystem) container.lookup(RepositorySystem.class);
             session = createSession(transferListener, repositoryListener, system,
                     createLocalRepository(localRepository, settings), settings);
@@ -72,8 +61,7 @@ public record Repositories(Settings settings,
                     pm.allow(url);
                 }
             }
-            return new Repositories(settings, system, session,
-                    (DefaultProjectBuilder) container.lookup(ProjectBuilder.class), repositories, pluginRepositories);
+            return new ModernRepositories(system, session, (DefaultProjectBuilder) container.lookup(ProjectBuilder.class), repositories, pluginRepositories);
         } catch (ComponentLookupException e) {
             throw new IllegalStateException(e);
         }
@@ -251,38 +239,6 @@ public record Repositories(Settings settings,
         return new File(IO.userHome(), ".m2/repository");
     }
 
-    /**
-     * Stripped down version of Maven SettingsXmlConfigurationProcessor. Unfortunately, there's no
-     * easy way to reuse the code there, so I have to repeat much of the logic
-     *
-     * @param globalSettings null to use default
-     * @param userSettings   null to use default
-     */
-    public static Settings loadSettings(File globalSettings, File userSettings, PlexusContainer container)
-            throws IOException {
-        DefaultSettingsBuilder builder;
-        SettingsBuildingRequest request;
-
-        try {
-            builder = (DefaultSettingsBuilder) container.lookup(SettingsBuilder.class);
-        } catch (ComponentLookupException e) {
-            throw new IllegalStateException(e);
-        }
-        request = new DefaultSettingsBuildingRequest();
-        if (globalSettings == null) {
-            globalSettings = new File(locateMavenConf(), "settings.xml");
-        }
-        if (userSettings == null) {
-            userSettings = new File(IO.userHome(), ".m2/settings.xml");
-        }
-        request.setGlobalSettingsFile(globalSettings);
-        request.setUserSettingsFile(userSettings);
-        try {
-            return builder.build(request).getEffectiveSettings();
-        } catch (SettingsBuildingException e) {
-            throw new IOException("failed to load settings: " + e.getMessage(), e);
-        }
-    }
 
     private static String localRepositoryPathFromMavenOpts() {
         String value;
@@ -296,35 +252,5 @@ public record Repositories(Settings settings,
             }
         }
         return null;
-    }
-
-    public static File locateMavenConf() throws IOException {
-        String home;
-        File mvn;
-        File conf;
-
-        home = System.getenv("MAVEN_HOME");
-        if (home != null) {
-            conf = new File(home, "conf");
-            if (!conf.isDirectory()) {
-                throw new IOException("MAVEN_HOME does not contain a conf directory: " + conf);
-            }
-            return conf;
-        }
-        mvn = IO.which("mvn");
-        if (mvn != null) {
-            mvn = IO.resolveSymbolicLinks(mvn);
-            mvn = mvn.getParentFile().getParentFile();
-            conf = new File(mvn, "conf");
-            if (conf.isDirectory()) {
-                return conf;
-            }
-            conf = new File(mvn, "libexec/conf");
-            if (conf.isDirectory()) {
-                return conf;
-            }
-        }
-
-        throw new IOException("cannot locate maven's conf directory - consider settings MAVEN_HOME or adding mvn to your path");
     }
 }

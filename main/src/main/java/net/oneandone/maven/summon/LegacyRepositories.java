@@ -34,7 +34,7 @@ import java.util.List;
  * project building requests
  */
 public record LegacyRepositories(ArtifactRepository local, List<ArtifactRepository> repositories, List<ArtifactRepository> pluginRepositories) {
-    public static LegacyRepositories create(Repositories repositories) {
+    public static LegacyRepositories create(ModernRepositories repositories) {
         return new LegacyRepositories(
                 toLegacy(repositories.repositorySession(), localRepo(repositories.repositorySession().getLocalRepository().getBasedir())),
                 toLegacyList(repositories.repositorySession(), repositories.repositories()),

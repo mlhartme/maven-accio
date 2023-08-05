@@ -99,7 +99,7 @@ public class MavenTest {
     @Test
     public void pluginRepositories() throws ProjectBuildingException {
         MavenProject pom = maven.loadPom(file("src/test/with-plugin-repository.pom"));
-        assertEquals(List.of(SONATYPE, Repositories.CENTRAL_URL), pom.getRemotePluginRepositories().stream().map(RemoteRepository::getUrl).toList());
+        assertEquals(List.of(SONATYPE, ModernRepositories.CENTRAL_URL), pom.getRemotePluginRepositories().stream().map(RemoteRepository::getUrl).toList());
     }
 
     @Test
@@ -107,10 +107,10 @@ public class MavenTest {
         File file = file("src/test/multi-with-plugin-repository/child/pom.xml");
         String extra = "https://some.extra.repo/";
         MavenProject pom = maven.loadPom(file);
-        assertEquals(List.of(SONATYPE, Repositories.CENTRAL_URL), pom.getRemotePluginRepositories().stream().map(RemoteRepository::getUrl).toList());
+        assertEquals(List.of(SONATYPE, ModernRepositories.CENTRAL_URL), pom.getRemotePluginRepositories().stream().map(RemoteRepository::getUrl).toList());
 
         pom = new Config().allowPomRepository(extra).build().loadPom(file);
-        assertEquals(List.of(Repositories.CENTRAL_URL, extra), pom.getRemotePluginRepositories().stream().map(RemoteRepository::getUrl).toList());
+        assertEquals(List.of(ModernRepositories.CENTRAL_URL, extra), pom.getRemotePluginRepositories().stream().map(RemoteRepository::getUrl).toList());
     }
 
     //--
