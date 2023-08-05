@@ -16,10 +16,13 @@
 package net.oneandone.maven.summon;
 
 import org.apache.maven.classrealm.ClassRealmManager;
+import org.apache.maven.repository.internal.ArtifactDescriptorUtils;
 import org.apache.maven.repository.internal.MavenRepositorySystemUtils;
 import org.apache.maven.settings.Mirror;
+import org.apache.maven.settings.Profile;
 import org.apache.maven.settings.Server;
 import org.apache.maven.settings.Settings;
+import org.apache.maven.settings.SettingsUtils;
 import org.apache.maven.settings.building.DefaultSettingsBuilder;
 import org.apache.maven.settings.building.DefaultSettingsBuildingRequest;
 import org.apache.maven.settings.building.SettingsBuilder;
@@ -50,10 +53,12 @@ import org.eclipse.aether.util.repository.DefaultProxySelector;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 
 public record Config(PlexusContainer container, Settings settings,
-                     RepositorySystem repositorySystem, DefaultRepositorySystemSession repositorySession) {
+                     RepositorySystem repositorySystem, DefaultRepositorySystemSession repositorySession,
+                     List<RemoteRepository> repositories, List<RemoteRepository> pluginRepositories) {
     public static Config create() throws IOException {
         return create(null, null, null);
     }
@@ -77,6 +82,8 @@ public record Config(PlexusContainer container, Settings settings,
         RepositorySystem system;
         DefaultRepositorySystemSession session;
         Settings settings;
+        List<RemoteRepository> repositories;
+        List<RemoteRepository> pluginRepositories;
 
         try {
             // "good" setup
@@ -92,7 +99,10 @@ public record Config(PlexusContainer container, Settings settings,
             system = container.lookup(RepositorySystem.class);
             session = createSession(transferListener, repositoryListener, system,
                     createLocalRepository(localRepository, settings), settings);
-            return new Config(container, settings, system, session);
+            repositories = new ArrayList<>();
+            pluginRepositories = new ArrayList<>();
+            createRemoteRepositories(settings, repositories, pluginRepositories);
+            return new Config(container, settings, system, session, repositories, pluginRepositories);
         } catch (ComponentLookupException e) {
             throw new IllegalStateException(e);
         }
@@ -114,6 +124,71 @@ public record Config(PlexusContainer container, Settings settings,
             localRepositoryStr = localRepository.getAbsolutePath();
         }
         return new LocalRepository(localRepositoryStr);
+    }
+
+    private static void createRemoteRepositories(Settings settings,
+                                                 List<RemoteRepository> resultRepositories, List<RemoteRepository> resultPluginRepositories) {
+        boolean central;
+        boolean pluginCentral;
+        List<String> actives;
+
+        central = false;
+        pluginCentral = false;
+        actives = settings.getActiveProfiles();
+        for (Profile profile : settings.getProfiles()) {
+            if (actives.contains(profile.getId()) || (profile.getActivation() != null && profile.getActivation().isActiveByDefault())) {
+                var p = SettingsUtils.convertFromSettingsProfile(profile);
+                central = convert(p.getRepositories(), resultRepositories);
+                pluginCentral = convert(p.getPluginRepositories(), resultPluginRepositories);
+            }
+        }
+        /* Maven defines the default central repository in its master parent - and not in the default settings, which I'd prefer.
+           As a consequent, central is not always defined when loading the settings.
+           I first added central to repositories only, because legacy repositories are used to load poms which ultimatly load the
+           master parent with it's repository definition. However, the parent might have to be loaded from central, so repositories
+           also need a central definition. */
+        if (!central) {
+            resultRepositories.add(createCentral());
+        }
+        if (!pluginCentral) {
+            resultPluginRepositories.add(createCentral());
+        }
+    }
+
+    private static final org.apache.maven.model.Repository CENTRAL;
+    static {
+        org.apache.maven.model.RepositoryPolicy release = new org.apache.maven.model.RepositoryPolicy();
+        org.apache.maven.model.RepositoryPolicy snapshot = new org.apache.maven.model.RepositoryPolicy();
+
+        release.setEnabled("true");
+        release.setUpdatePolicy("daily");
+        release.setChecksumPolicy("warn");
+        snapshot.setEnabled("false");
+        CENTRAL = new org.apache.maven.model.Repository();
+        CENTRAL.setUrl("https://repo.maven.apache.org/maven2");
+        CENTRAL.setId("central");
+        CENTRAL.setReleases(release);
+        CENTRAL.setSnapshots(snapshot);
+    }
+
+    private static RemoteRepository createCentral() {
+        return ArtifactDescriptorUtils.toRemoteRepository(CENTRAL);
+    }
+
+    /** @return true if central was included */
+    private static boolean convert(List<org.apache.maven.model.Repository> src, List<RemoteRepository> dest) {
+        boolean central;
+        RemoteRepository converted;
+
+        central = false;
+        for (org.apache.maven.model.Repository repository : src) {
+            converted = ArtifactDescriptorUtils.toRemoteRepository(repository);
+            if ("central".equals(converted.getId())) {
+                central = true;
+            }
+            dest.add(converted);
+        }
+        return central;
     }
 
     private static DefaultRepositorySystemSession createSession(TransferListener transferListener, RepositoryListener repositoryListener,
@@ -232,6 +307,9 @@ public record Config(PlexusContainer container, Settings settings,
     }
 
     /**
+     * Stripped down version of Maven SettingsXmlConfigurationProcessor. Unfortunately, there's no
+     * easy way to reuse the code there, so I have to repeat much of the logic
+     *
      * @param globalSettings null to use default
      * @param userSettings null to use default
      */
