@@ -15,8 +15,6 @@
  */
 package net.oneandone.maven.summon.api;
 
-import net.oneandone.maven.summon.extension.ExtensionBlocker;
-import org.apache.maven.classrealm.ClassRealmManager;
 import org.apache.maven.project.DefaultProjectBuildingRequest;
 import org.apache.maven.project.MavenProject;
 import org.apache.maven.project.ProjectBuilder;
@@ -24,7 +22,6 @@ import org.apache.maven.project.ProjectBuildingException;
 import org.apache.maven.project.ProjectBuildingRequest;
 import org.apache.maven.project.ProjectBuildingResult;
 import org.codehaus.plexus.PlexusContainer;
-import org.codehaus.plexus.component.repository.exception.ComponentLookupException;
 import org.eclipse.aether.RepositoryException;
 import org.eclipse.aether.RepositorySystemSession;
 import org.eclipse.aether.artifact.Artifact;
@@ -124,7 +121,7 @@ public class Maven implements AutoCloseable {
         request = new ArtifactRequest(artifact, remoteRepositories, null);
         result = repositorySystem.resolveArtifact(repositorySession, request);
         if (!result.isResolved()) {
-            throw new ArtifactResolutionException(new ArrayList<ArtifactResult>()); // TODO
+            throw new ArtifactResolutionException(new ArrayList<>()); // TODO
         }
         return result.getArtifact().getFile();
     }
@@ -151,22 +148,7 @@ public class Maven implements AutoCloseable {
         return loadAllPoms(false, file, resolve, userProperties, profiles).get(0);
     }
 
-    public List<String> getLoadedExtensions() {
-        try {
-            return ((ExtensionBlocker) container.lookup(ClassRealmManager.class)).getAllowedExtensions();
-        } catch (ComponentLookupException e) {
-            throw new IllegalArgumentException(e);
-        }
-    }
-    public List<String> getBlockedExtensions() {
-        try {
-            return ((ExtensionBlocker) container.lookup(ClassRealmManager.class)).getBlockedExtensions();
-        } catch (ComponentLookupException e) {
-            throw new IllegalArgumentException(e);
-        }
-    }
-
-    public List<MavenProject> loadAllPoms(boolean recursive, File file, boolean resolve,  Properties userProperties, List<String> profiles)
+    public List<MavenProject> loadAllPoms(boolean recursive, File file, boolean resolve, Properties userProperties, List<String> profiles)
             throws ProjectBuildingException {
         DefaultProjectBuildingRequest request;
         List<ProjectBuildingResult> resultList;

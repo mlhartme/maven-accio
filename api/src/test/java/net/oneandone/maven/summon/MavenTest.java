@@ -23,6 +23,7 @@ import org.apache.maven.model.Plugin;
 import org.apache.maven.model.PluginExecution;
 import org.apache.maven.project.MavenProject;
 import org.apache.maven.project.ProjectBuildingException;
+import org.codehaus.plexus.classworlds.realm.ClassRealm;
 import org.eclipse.aether.RepositoryException;
 import org.eclipse.aether.artifact.DefaultArtifact;
 import org.eclipse.aether.repository.RemoteRepository;
@@ -37,7 +38,9 @@ import org.eclipse.aether.version.Version;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.URL;
 import java.nio.file.Files;
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -46,7 +49,6 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
 
 public class MavenTest {
     // run this with -Xmx32m to check for memory leaks
@@ -334,12 +336,26 @@ public class MavenTest {
 
     private static final String EXTENSION_GAV = "org.apache.felix:maven-bundle-plugin:4.2.1";
 
+    private static List<String> imported(MavenProject pom) {
+        List<String> result = new ArrayList<>();
+        ClassRealm r = pom.getClassRealm();
+        for (ClassRealm i : r.getImportRealms()) {
+            for (URL url : i.getURLs()) {
+                String str = url.toString();
+                if (!str.startsWith("file:/")) {
+                    throw new IllegalStateException(str);
+                }
+                result.add(str.substring(str.lastIndexOf('/') + 1));
+            }
+        }
+        return result;
+    }
+
     @Test
     public void pluginExtensionBlocked() throws ProjectBuildingException {
         MavenProject pom = maven.loadPom(file("src/test/with-plugin-extension.pom"));
         assertEquals("true", pom.getModel().getBuild().getPluginsAsMap().get("org.apache.felix:maven-bundle-plugin").getExtensions());
-        assertEquals(List.of(), maven.getLoadedExtensions());
-        assertEquals(List.of(EXTENSION_GAV), maven.getBlockedExtensions());
+        assertEquals(List.of(), imported(pom));
     }
 
     @Test
@@ -347,16 +363,14 @@ public class MavenTest {
         Maven m = new Config().allowExtension("org.apache.felix:maven-bundle-plugin").build();
         MavenProject pom = m.loadPom(file("src/test/with-plugin-extension.pom"));
         assertEquals("true", pom.getModel().getBuild().getPluginsAsMap().get("org.apache.felix:maven-bundle-plugin").getExtensions());
-        assertEquals(List.of(EXTENSION_GAV), m.getLoadedExtensions());
-        assertEquals(List.of(), m.getBlockedExtensions());
+        assertEquals(List.of("maven-bundle-plugin-4.2.1.jar"), imported(pom));
     }
 
     @Test
     public void buildExtensionBlocked() throws ProjectBuildingException {
         MavenProject pom = maven.loadPom(file("src/test/with-build-extension.pom"));
         assertEquals(1, pom.getModel().getBuild().getExtensions().size());
-        assertEquals(List.of(), maven.getLoadedExtensions());
-        assertEquals(List.of(EXTENSION_GAV), maven.getBlockedExtensions());
+        assertEquals(List.of(), imported(pom));
     }
 
     @Test
@@ -364,8 +378,7 @@ public class MavenTest {
         Maven m = new Config().allowExtension("org.apache.felix:maven-bundle-plugin").build();
         MavenProject pom = m.loadPom(file("src/test/with-build-extension.pom"));
         assertEquals(1, pom.getModel().getBuild().getExtensions().size());
-        assertEquals(List.of(EXTENSION_GAV), m.getLoadedExtensions());
-        assertEquals(List.of(), m.getBlockedExtensions());
+        assertEquals(List.of("maven-bundle-plugin-4.2.1.jar"), imported(pom));
     }
 
     //-- multi module
