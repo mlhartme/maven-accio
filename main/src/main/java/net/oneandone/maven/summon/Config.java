@@ -15,6 +15,8 @@
  */
 package net.oneandone.maven.summon;
 
+import org.apache.maven.classrealm.ClassRealmManager;
+import org.apache.maven.project.ProjectBuildingHelper;
 import org.apache.maven.settings.Settings;
 import org.apache.maven.settings.building.DefaultSettingsBuilder;
 import org.apache.maven.settings.building.DefaultSettingsBuildingRequest;
@@ -97,10 +99,24 @@ public class Config {
 
     public Maven build() throws IOException {
         PlexusContainer container = createContainer();
-        Settings settings = loadSettings(globalSettings, userSettings, container);
+        Settings settings = loadSettings(container, globalSettings, userSettings);
+        try {
+            ExtensionBlocker rm = (ExtensionBlocker) container.lookup(ClassRealmManager.class);
+            if (allowExtensions != null) {
+                rm.getAllowArtifacts().addAll(allowExtensions);
+            }
+            PomRepositoryBlocker pm = (PomRepositoryBlocker) container.lookup(ProjectBuildingHelper.class);
+            if (allowPomRepositories != null) {
+                for (String url : allowPomRepositories) {
+                    pm.allow(url);
+                }
+            }
+        } catch (ComponentLookupException e) {
+            throw new IllegalStateException(e);
+        }
+
         ModernRepositories repositories = ModernRepositories.create(container, settings,
-                localRepository, allowExtensions, allowPomRepositories,
-                transferListener, repositoryListener);
+                localRepository, transferListener, repositoryListener);
         LegacyRepositories legacy = LegacyRepositories.create(repositories);
         return new Maven(container, repositories.repositorySystem(), repositories.repositorySession(),
                 repositories.repositories(), legacy, repositories.projectBuilder());
@@ -142,7 +158,7 @@ public class Config {
      * @param globalSettings null to use default
      * @param userSettings   null to use default
      */
-    public static Settings loadSettings(File globalSettings, File userSettings, PlexusContainer container)
+    public static Settings loadSettings(PlexusContainer container, File globalSettings, File userSettings)
             throws IOException {
         DefaultSettingsBuilder builder;
         SettingsBuildingRequest request;

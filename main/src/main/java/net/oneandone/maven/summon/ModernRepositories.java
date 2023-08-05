@@ -1,9 +1,7 @@
 package net.oneandone.maven.summon;
 
-import org.apache.maven.classrealm.ClassRealmManager;
 import org.apache.maven.project.DefaultProjectBuilder;
 import org.apache.maven.project.ProjectBuilder;
-import org.apache.maven.project.ProjectBuildingHelper;
 import org.apache.maven.repository.internal.ArtifactDescriptorUtils;
 import org.apache.maven.repository.internal.MavenRepositorySystemUtils;
 import org.apache.maven.settings.Mirror;
@@ -37,7 +35,6 @@ public record ModernRepositories(DefaultRepositorySystem repositorySystem, Repos
                                  DefaultProjectBuilder projectBuilder,
                                  List<RemoteRepository> repositories, List<RemoteRepository> pluginRepositories) {
     public static ModernRepositories create(PlexusContainer container, Settings settings, File localRepository,
-                                            List<String> allowExtensions, List<String> allowPomRepositories,
                                             TransferListener transferListener, RepositoryListener repositoryListener) throws IOException {
         DefaultRepositorySystem system;
         DefaultRepositorySystemSession session;
@@ -45,22 +42,12 @@ public record ModernRepositories(DefaultRepositorySystem repositorySystem, Repos
         List<RemoteRepository> pluginRepositories;
 
         try {
-            ExtensionBlocker rm = (ExtensionBlocker) container.lookup(ClassRealmManager.class);
-            if (allowExtensions != null) {
-                rm.getAllowArtifacts().addAll(allowExtensions);
-            }
             system = (DefaultRepositorySystem) container.lookup(RepositorySystem.class);
             session = createSession(transferListener, repositoryListener, system,
                     createLocalRepository(localRepository, settings), settings);
             repositories = new ArrayList<>();
             pluginRepositories = new ArrayList<>();
             createRemoteRepositories(settings, repositories, pluginRepositories);
-            PomRepositoryBlocker pm = (PomRepositoryBlocker) container.lookup(ProjectBuildingHelper.class);
-            if (allowPomRepositories != null) {
-                for (String url : allowPomRepositories) {
-                    pm.allow(url);
-                }
-            }
             return new ModernRepositories(system, session, (DefaultProjectBuilder) container.lookup(ProjectBuilder.class), repositories, pluginRepositories);
         } catch (ComponentLookupException e) {
             throw new IllegalStateException(e);
