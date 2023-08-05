@@ -42,7 +42,7 @@ public record LegacyRepositories(
     }
 
     public static RemoteRepository localRepo(File dir) {
-        return new RemoteRepository.Builder("local", "typeTODO", dir.toURI().toString())
+        return new RemoteRepository.Builder("local", null, dir.toURI().toString())
                 .setReleasePolicy(localPolicy())
                 .setSnapshotPolicy(localPolicy())
                 .build();
