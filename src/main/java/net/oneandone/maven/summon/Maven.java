@@ -79,8 +79,8 @@ public class Maven implements AutoCloseable {
      * Duplicates the remote field with deprecated classes because the ProjectBuilder has not been
      * switch to RemoteRepository.
      */
-    private final List<ArtifactRepository> remoteLegacy;
-    private final List<ArtifactRepository> pluginRemoteLegacy;
+    private final List<ArtifactRepository> legacyRemote;
+    private final List<ArtifactRepository> legacyPluginRemote;
 
     // This is the ProjectBuilder used by Maven 3.9.3 to load poms. Note that the respective ProjectBuilderRequest uses
     // the deprecated org.apache.maven.artifact.repository.ArtifactRepository class, so deprecation warnings are unavailable.
@@ -94,11 +94,11 @@ public class Maven implements AutoCloseable {
         this.container = config.container();
         this.repositorySystem = config.repositorySystem();
         this.repositorySession = config.repositorySession();
+        this.remote = legacyConfig.remote(); // TODO: form config
         this.builder = legacyConfig.builder();
-        this.remote = legacyConfig.remote();
         this.localLegacy = legacyConfig.legacyLocal();
-        this.remoteLegacy = legacyConfig.legacyRemote();
-        this.pluginRemoteLegacy = legacyConfig.legacyPluginRemote();
+        this.legacyRemote = legacyConfig.legacyRemote();
+        this.legacyPluginRemote = legacyConfig.legacyPluginRemote();
     }
 
     //--
@@ -191,8 +191,8 @@ public class Maven implements AutoCloseable {
         if (userProperties != null) {
             request.setUserProperties(userProperties);
         }
-        request.setRemoteRepositories(remoteLegacy);
-        request.setPluginArtifactRepositories(pluginRemoteLegacy);
+        request.setRemoteRepositories(legacyRemote);
+        request.setPluginArtifactRepositories(legacyPluginRemote);
         if (profiles != null) {
             request.setActiveProfileIds(profiles);
         }
