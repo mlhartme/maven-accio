@@ -15,6 +15,14 @@
  */
 package net.oneandone.maven.summon;
 
+import org.codehaus.plexus.DefaultContainerConfiguration;
+import org.codehaus.plexus.DefaultPlexusContainer;
+import org.codehaus.plexus.PlexusConstants;
+import org.codehaus.plexus.PlexusContainer;
+import org.codehaus.plexus.PlexusContainerException;
+import org.codehaus.plexus.classworlds.ClassWorld;
+import org.codehaus.plexus.classworlds.realm.ClassRealm;
+import org.codehaus.plexus.logging.Logger;
 import org.eclipse.aether.RepositoryListener;
 import org.eclipse.aether.transfer.TransferListener;
 
@@ -81,11 +89,42 @@ public class Config {
     }
 
     public Maven build() throws IOException {
-        Repositories repositories = Repositories.create(
+        PlexusContainer container = createContainer();
+        Repositories repositories = Repositories.create(container,
                 localRepository, globalSettings, userSettings, allowExtensions, allowPomRepositories,
                 transferListener, repositoryListener);
         LegacyRepositories legacy = LegacyRepositories.create(repositories);
-        return new Maven(repositories.container(), repositories.repositorySystem(), repositories.repositorySession(),
+        return new Maven(container, repositories.repositorySystem(), repositories.repositorySession(),
                 repositories.repositories(), legacy, repositories.projectBuilder());
     }
+
+    public static DefaultPlexusContainer createContainer() {
+        return createContainer(null, null, Logger.LEVEL_DISABLED);
+    }
+
+    // mimics the respective MavenCli code
+    public static DefaultPlexusContainer createContainer(ClassWorld classWorld, ClassRealm realm, int loglevel) {
+        DefaultContainerConfiguration config;
+        DefaultPlexusContainer container;
+
+        config = new DefaultContainerConfiguration();
+        if (classWorld != null) {
+            config.setClassWorld(classWorld);
+        }
+        if (realm != null) {
+            config.setRealm(realm);
+        }
+        config.setClassPathScanning(PlexusConstants.SCANNING_INDEX);
+        config.setAutoWiring(true);
+        config.setJSR250Lifecycle(true);
+        try {
+            container = new DefaultPlexusContainer(config);
+        } catch (PlexusContainerException e) {
+            throw new IllegalStateException(e);
+        }
+        container.setLookupRealm(null);
+        container.getLoggerManager().setThreshold(loglevel);
+        return container;
+    }
+
 }

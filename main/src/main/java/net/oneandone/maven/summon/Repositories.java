@@ -16,15 +16,8 @@ import org.apache.maven.settings.building.DefaultSettingsBuildingRequest;
 import org.apache.maven.settings.building.SettingsBuilder;
 import org.apache.maven.settings.building.SettingsBuildingException;
 import org.apache.maven.settings.building.SettingsBuildingRequest;
-import org.codehaus.plexus.DefaultContainerConfiguration;
-import org.codehaus.plexus.DefaultPlexusContainer;
-import org.codehaus.plexus.PlexusConstants;
 import org.codehaus.plexus.PlexusContainer;
-import org.codehaus.plexus.PlexusContainerException;
-import org.codehaus.plexus.classworlds.ClassWorld;
-import org.codehaus.plexus.classworlds.realm.ClassRealm;
 import org.codehaus.plexus.component.repository.exception.ComponentLookupException;
-import org.codehaus.plexus.logging.Logger;
 import org.eclipse.aether.DefaultRepositorySystemSession;
 import org.eclipse.aether.RepositoryListener;
 import org.eclipse.aether.RepositorySystem;
@@ -48,22 +41,12 @@ import java.util.List;
 /**
  * Represents configuration with settings and local configuration.
  */
-public record Repositories(PlexusContainer container, Settings settings,
+public record Repositories(Settings settings,
                            DefaultRepositorySystem repositorySystem, RepositorySystemSession repositorySession,
                            DefaultProjectBuilder projectBuilder,
                            List<RemoteRepository> repositories, List<RemoteRepository> pluginRepositories) {
-    public static Repositories create(File localRepository, File globalSettings, File userSettings,
-                               List<String> allowExtensions, List<String> allowPomRepositories, TransferListener transferListener, RepositoryListener repositoryListener)
-            throws IOException {
-        return create(localRepository, globalSettings, userSettings, createContainer(), allowExtensions, allowPomRepositories,
-                transferListener, repositoryListener);
-    }
-
-    /**
-     * @param allowExtensions null to allow all, empty array to forbid all
-     */
-    public static Repositories create(File localRepository, File globalSettings, File userSettings,
-                               DefaultPlexusContainer container, List<String> allowExtensions, List<String> allowPomRepositories,
+    public static Repositories create(PlexusContainer container, File localRepository, File globalSettings, File userSettings,
+                               List<String> allowExtensions, List<String> allowPomRepositories,
                                TransferListener transferListener, RepositoryListener repositoryListener) throws IOException {
         DefaultRepositorySystem system;
         DefaultRepositorySystemSession session;
@@ -89,7 +72,7 @@ public record Repositories(PlexusContainer container, Settings settings,
                     pm.allow(url);
                 }
             }
-            return new Repositories(container, settings, system, session,
+            return new Repositories(settings, system, session,
                     (DefaultProjectBuilder) container.lookup(ProjectBuilder.class), repositories, pluginRepositories);
         } catch (ComponentLookupException e) {
             throw new IllegalStateException(e);
@@ -268,35 +251,6 @@ public record Repositories(PlexusContainer container, Settings settings,
         return new File(IO.userHome(), ".m2/repository");
     }
 
-    public static DefaultPlexusContainer createContainer() {
-        return createContainer(null, null, Logger.LEVEL_DISABLED);
-    }
-
-    // mimics the respective MavenCli code
-    public static DefaultPlexusContainer createContainer(ClassWorld classWorld, ClassRealm realm, int loglevel) {
-        DefaultContainerConfiguration config;
-        DefaultPlexusContainer container;
-
-        config = new DefaultContainerConfiguration();
-        if (classWorld != null) {
-            config.setClassWorld(classWorld);
-        }
-        if (realm != null) {
-            config.setRealm(realm);
-        }
-        config.setClassPathScanning(PlexusConstants.SCANNING_INDEX);
-        config.setAutoWiring(true);
-        config.setJSR250Lifecycle(true);
-        try {
-            container = new DefaultPlexusContainer(config);
-        } catch (PlexusContainerException e) {
-            throw new IllegalStateException(e);
-        }
-        container.setLookupRealm(null);
-        container.getLoggerManager().setThreshold(loglevel);
-        return container;
-    }
-
     /**
      * Stripped down version of Maven SettingsXmlConfigurationProcessor. Unfortunately, there's no
      * easy way to reuse the code there, so I have to repeat much of the logic
@@ -304,7 +258,7 @@ public record Repositories(PlexusContainer container, Settings settings,
      * @param globalSettings null to use default
      * @param userSettings   null to use default
      */
-    public static Settings loadSettings(File globalSettings, File userSettings, DefaultPlexusContainer container)
+    public static Settings loadSettings(File globalSettings, File userSettings, PlexusContainer container)
             throws IOException {
         DefaultSettingsBuilder builder;
         SettingsBuildingRequest request;
