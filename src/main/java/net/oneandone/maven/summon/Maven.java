@@ -87,14 +87,18 @@ public class Maven implements AutoCloseable {
     private final ProjectBuilder builder;
 
     public Maven(Config config) {
+        this(config, LegacyConfig.create(config));
+    }
+
+    public Maven(Config config, LegacyConfig legacyConfig) {
         this.container = config.container();
         this.repositorySystem = config.repositorySystem();
         this.repositorySession = config.repositorySession();
-        this.builder = config.builder();
-        this.remote = config.remote();
-        this.localLegacy = config.legacyLocal();
-        this.remoteLegacy = config.legacyRemote();
-        this.pluginRemoteLegacy = config.legacyPluginRemote();
+        this.builder = legacyConfig.builder();
+        this.remote = legacyConfig.remote();
+        this.localLegacy = legacyConfig.legacyLocal();
+        this.remoteLegacy = legacyConfig.legacyRemote();
+        this.pluginRemoteLegacy = legacyConfig.legacyPluginRemote();
     }
 
     //--

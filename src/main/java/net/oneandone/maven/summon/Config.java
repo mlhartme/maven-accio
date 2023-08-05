@@ -15,19 +15,11 @@
  */
 package net.oneandone.maven.summon;
 
-import org.apache.maven.RepositoryUtils;
-import org.apache.maven.artifact.InvalidRepositoryException;
-import org.apache.maven.artifact.repository.ArtifactRepository;
 import org.apache.maven.classrealm.ClassRealmManager;
-import org.apache.maven.project.ProjectBuilder;
-import org.apache.maven.project.ProjectBuildingHelper;
 import org.apache.maven.repository.internal.MavenRepositorySystemUtils;
-import org.apache.maven.repository.legacy.LegacyRepositorySystem;
 import org.apache.maven.settings.Mirror;
-import org.apache.maven.settings.Profile;
 import org.apache.maven.settings.Server;
 import org.apache.maven.settings.Settings;
-import org.apache.maven.settings.SettingsUtils;
 import org.apache.maven.settings.building.DefaultSettingsBuilder;
 import org.apache.maven.settings.building.DefaultSettingsBuildingRequest;
 import org.apache.maven.settings.building.SettingsBuilder;
@@ -58,12 +50,10 @@ import org.eclipse.aether.util.repository.DefaultProxySelector;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.List;
 
-public record Config(PlexusContainer container,
-                     RepositorySystem repositorySystem, DefaultRepositorySystemSession repositorySession, ProjectBuilder builder,
-                     List<RemoteRepository> remote, ArtifactRepository legacyLocal, List<ArtifactRepository> legacyRemote, List<ArtifactRepository> legacyPluginRemote) {
+public record Config(PlexusContainer container, Settings settings,
+                     RepositorySystem repositorySystem, DefaultRepositorySystemSession repositorySession) {
     public static Config create() throws IOException {
         return create(null, null, null);
     }
@@ -87,10 +77,6 @@ public record Config(PlexusContainer container,
         RepositorySystem system;
         DefaultRepositorySystemSession session;
         Settings settings;
-        LegacyRepositorySystem legacySystem;
-        List<ArtifactRepository> repositoriesLegacy;
-        List<ArtifactRepository> pluginRepositoriesLegacy;
-        LocalRepository localRepositoryObj;
 
         try {
             // "good" setup
@@ -104,24 +90,10 @@ public record Config(PlexusContainer container,
                 throw new IOException("cannot load settings: " + e.getMessage(), e);
             }
             system = container.lookup(RepositorySystem.class);
-            localRepositoryObj = createLocalRepository(localRepository, settings);
-            session = createSession(transferListener, repositoryListener, system, localRepositoryObj, settings);
-
-            // legacy setup - we need redundant ArtifactRepositories for project building requests
-            legacySystem = (LegacyRepositorySystem) container.lookup(org.apache.maven.repository.RepositorySystem.class, "default");
-            repositoriesLegacy = new ArrayList<>();
-            pluginRepositoriesLegacy = new ArrayList<>();
-            repositoriesLegacy(legacySystem, settings, repositoriesLegacy, pluginRepositoriesLegacy);
-            legacySystem.injectAuthentication(session, repositoriesLegacy);
-            legacySystem.injectMirror(session, repositoriesLegacy);
-            legacySystem.injectProxy(session, repositoriesLegacy);
-            PluginRepositoryBlocker pm = (PluginRepositoryBlocker) container.lookup(ProjectBuildingHelper.class);
-            for (var repo : pluginRepositoriesLegacy) {
-                pm.allow(repo.getUrl());
-            }
-            return new Config(container, system, session, container.lookup(ProjectBuilder.class),
-                    RepositoryUtils.toRepos(repositoriesLegacy), legacySystem.createLocalRepository(localRepositoryObj.getBasedir()), repositoriesLegacy, pluginRepositoriesLegacy);
-        } catch (InvalidRepositoryException | ComponentLookupException e) {
+            session = createSession(transferListener, repositoryListener, system,
+                    createLocalRepository(localRepository, settings), settings);
+            return new Config(container, settings, system, session);
+        } catch (ComponentLookupException e) {
             throw new IllegalStateException(e);
         }
     }
@@ -323,51 +295,5 @@ public record Config(PlexusContainer container,
         }
 
         throw new IOException("cannot locate maven's conf directory - consider settings MAVEN_HOME or adding mvn to your path");
-    }
-
-    private static void repositoriesLegacy(LegacyRepositorySystem legacy, Settings settings,
-                                           List<ArtifactRepository> resultRepositories, List<ArtifactRepository> resultPluginRepositories)
-            throws InvalidRepositoryException {
-        boolean central;
-        boolean pluginCentral;
-        List<String> actives;
-
-        central = false;
-        pluginCentral = false;
-        actives = settings.getActiveProfiles();
-        for (Profile profile : settings.getProfiles()) {
-            if (actives.contains(profile.getId()) || (profile.getActivation() != null && profile.getActivation().isActiveByDefault())) {
-                var p = SettingsUtils.convertFromSettingsProfile(profile);
-                central = convert(legacy, p.getRepositories(), resultRepositories);
-                pluginCentral = convert(legacy, p.getPluginRepositories(), resultPluginRepositories);
-            }
-        }
-        /* Maven defines the default central repository in its master parent - and not in the default settings, which I'd prefer.
-           As a consequent, central is not always defined when loading the settings.
-           I first added central to repositories only, because legacy repositories are used to load poms which ultimatly load the
-           master parent with it's repository definition. However, the parent might have to be loaded from central, so repositories
-           also need a central definition. */
-        if (!central) {
-            resultRepositories.add(legacy.createDefaultRemoteRepository());
-        }
-        if (!pluginCentral) {
-            resultPluginRepositories.add(legacy.createDefaultRemoteRepository());
-        }
-    }
-
-    /** @return true if contral was included */
-    private static boolean convert(LegacyRepositorySystem legacy,  List<org.apache.maven.model.Repository> src, List<ArtifactRepository> dest) throws InvalidRepositoryException {
-        boolean central;
-        ArtifactRepository artifactRepository;
-
-        central = false;
-        for (org.apache.maven.model.Repository repository : src) {
-            artifactRepository = legacy.buildArtifactRepository(repository);
-            if ("central".equals(artifactRepository.getId())) {
-                central = true;
-            }
-            dest.add(artifactRepository);
-        }
-        return central;
     }
 }
