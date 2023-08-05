@@ -53,8 +53,8 @@ public record LegacyRepositories(
 
     public static ArtifactRepository toLegacy(RemoteRepository repo) {
         MavenArtifactRepository result = new MavenArtifactRepository(
-                repo.getId(), repo.getUrl(), getLayout(repo),
-                policy(repo.getPolicy(true)), policy(repo.getPolicy(false)));
+                repo.getId(), repo.getUrl(), toLayout(repo),
+                toPolicy(repo.getPolicy(true)), toPolicy(repo.getPolicy(false)));
         result.setBlacklisted(repo.isBlocked());
         result.setAuthentication(toAuthentication(repo.getAuthentication()));
         result.setMirroredRepositories(toLegacyList(repo.getMirroredRepositories()));
@@ -66,12 +66,18 @@ public record LegacyRepositories(
         return lst.stream().map(LegacyRepositories::toLegacy).toList();
     }
 
-    public static ArtifactRepositoryLayout getLayout(RemoteRepository repo) {
-        // TODO
-        return new DefaultRepositoryLayout();
+    public static ArtifactRepositoryLayout toLayout(RemoteRepository repo) {
+        String type = repo.getContentType();
+        if (type == null) {
+            type = "";
+        }
+        return switch (type) {
+            case "", "default" -> new DefaultRepositoryLayout();
+            default -> throw new IllegalStateException("unknown type: " + type);
+        };
     }
 
-    private static ArtifactRepositoryPolicy policy(RepositoryPolicy policy) {
+    private static ArtifactRepositoryPolicy toPolicy(RepositoryPolicy policy) {
         return new ArtifactRepositoryPolicy(policy.isEnabled(), policy.getUpdatePolicy(), policy.getChecksumPolicy());
     }
 
