@@ -29,18 +29,16 @@ import java.io.File;
 import java.util.List;
 
 /**
- * Legacy repositories. This is redundant config, but we need ArtifactRepositories for the project build and
+ * Legacy repositories. This is redundant config, but we need ArtifactRepositories for the project builder and
  * project building requests
  */
-public record LegacyConfig(ArtifactRepository legacyLocal, List<ArtifactRepository> legacyRemote, List<ArtifactRepository> legacyPluginRemote) {
-    public static LegacyConfig create(Config config) {
-        List<ArtifactRepository> repositoriesLegacy;
-        List<ArtifactRepository> pluginRepositoriesLegacy;
-
-        repositoriesLegacy = toLegacyList(config.repositories());
-        pluginRepositoriesLegacy = toLegacyList(config.pluginRepositories());
-        return new LegacyConfig(localToLegacy(config.repositorySession().getLocalRepository().getBasedir()),
-                repositoriesLegacy, pluginRepositoriesLegacy);
+public record LegacyRepositories(
+        ArtifactRepository local, List<ArtifactRepository> repositories, List<ArtifactRepository> pluginRepositories) {
+    public static LegacyRepositories create(Config config) {
+        return new LegacyRepositories(
+                localToLegacy(config.repositorySession().getLocalRepository().getBasedir()),
+                toLegacyList(config.repositories()),
+                toLegacyList(config.pluginRepositories()));
     }
 
     public static ArtifactRepository localToLegacy(File dir) {
@@ -63,7 +61,7 @@ public record LegacyConfig(ArtifactRepository legacyLocal, List<ArtifactReposito
     }
 
     public static List<ArtifactRepository> toLegacyList(List<RemoteRepository> lst) {
-        return lst.stream().map(LegacyConfig::toLegacy).toList();
+        return lst.stream().map(LegacyRepositories::toLegacy).toList();
     }
 
     public static ArtifactRepositoryLayout getLayout(RemoteRepository repo) {

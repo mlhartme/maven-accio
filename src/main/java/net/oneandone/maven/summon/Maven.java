@@ -15,7 +15,6 @@
  */
 package net.oneandone.maven.summon;
 
-import org.apache.maven.artifact.repository.ArtifactRepository;
 import org.apache.maven.artifact.repository.metadata.GroupRepositoryMetadata;
 import org.apache.maven.artifact.repository.metadata.MetadataBridge;
 import org.apache.maven.classrealm.ClassRealmManager;
@@ -66,39 +65,28 @@ public class Maven implements AutoCloseable {
     private final DefaultRepositorySystem repositorySystem;
     private final RepositorySystemSession repositorySession;
 
-    /** duplicates repositorySession.getLocalRepository because ProjectBuilder still needs it */
-    private final ArtifactRepository legacyLocal;
-
     /**
      * Used to resolve artifacts.
      */
     private final List<RemoteRepository> remote;
 
-    /**
-     * External repositories - i.e. loaded from settings - used to load poms.
-     * Duplicates the remote field with deprecated classes because the ProjectBuilder has not been
-     * switch to RemoteRepository.
-     */
-    private final List<ArtifactRepository> legacyRemote;
-    private final List<ArtifactRepository> legacyPluginRemote;
+    private final LegacyRepositories legacy;
 
     // This is the ProjectBuilder used by Maven 3.9.3 to load poms. Note that the respective ProjectBuilderRequest uses
     // the deprecated org.apache.maven.artifact.repository.ArtifactRepository class, so deprecation warnings are unavailable.
     private final ProjectBuilder projectBuilder;
 
     public Maven(Config config) {
-        this(config, LegacyConfig.create(config));
+        this(config, LegacyRepositories.create(config));
     }
 
-    public Maven(Config config, LegacyConfig legacyConfig) {
+    public Maven(Config config, LegacyRepositories legacyRepositories) {
         this.container = config.container();
         this.repositorySystem = config.repositorySystem();
         this.repositorySession = config.repositorySession();
         this.remote = config.repositories();
         this.projectBuilder = config.projectBuilder();
-        this.legacyLocal = legacyConfig.legacyLocal();
-        this.legacyRemote = legacyConfig.legacyRemote();
-        this.legacyPluginRemote = legacyConfig.legacyPluginRemote();
+        this.legacy = legacyRepositories;
     }
 
     //--
@@ -186,13 +174,13 @@ public class Maven implements AutoCloseable {
 
         // from DefaultMavenExecutionRequest.getProjectBuildingRequest()
         request = new DefaultProjectBuildingRequest();
-        request.setLocalRepository(legacyLocal);
+        request.setLocalRepository(legacy.local());
         request.setSystemProperties(System.getProperties());
         if (userProperties != null) {
             request.setUserProperties(userProperties);
         }
-        request.setRemoteRepositories(legacyRemote);
-        request.setPluginArtifactRepositories(legacyPluginRemote);
+        request.setRemoteRepositories(legacy.repositories());
+        request.setPluginArtifactRepositories(legacy.pluginRepositories());
         if (profiles != null) {
             request.setActiveProfileIds(profiles);
         }
