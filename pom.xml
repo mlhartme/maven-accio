@@ -60,12 +60,6 @@
       <version>1</version>
     </dependency>
 
-    <dependency>
-      <groupId>org.apache.maven</groupId>
-      <artifactId>maven-compat</artifactId>
-      <version>${mavenVersion}</version>
-    </dependency>
-
     <!-- maven dependencies to load poms and fetch the site id -->
     <dependency>
       <groupId>org.apache.maven</groupId>
@@ -133,6 +127,12 @@
       <groupId>org.apache.maven.resolver</groupId>
       <artifactId>maven-resolver-transport-http</artifactId>
       <version>${resolverVersion}</version>
+    </dependency>
+
+    <dependency>
+      <groupId>org.apache.maven</groupId>
+      <artifactId>maven-compat</artifactId>
+      <version>${mavenVersion}</version>
     </dependency>
 
     <dependency>
