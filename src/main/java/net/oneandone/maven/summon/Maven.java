@@ -197,6 +197,8 @@ public class Maven implements AutoCloseable {
         request.setResolveDependencies(resolve);
 
         // settings repositories have precedence over pom repositories
+        // TODO: Maven documentation claims external repositories have precedence but my reading
+        // of the source is the opposite
         request.setRepositoryMerging(ProjectBuildingRequest.RepositoryMerging.REQUEST_DOMINANT);
 
         resultList = builder.build(List.of(file), recursive, request);
