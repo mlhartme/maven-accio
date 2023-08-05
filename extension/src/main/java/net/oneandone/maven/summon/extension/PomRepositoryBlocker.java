@@ -13,6 +13,8 @@ import java.util.List;
 
 /**
  * Blocks repositories from actually being used for dependency or plugin resolution.
+ * Note that they are not remove from the model, so help:effective-pom still shows them,
+ * but the are skipped in the repository list actually use for resolving.
  * Does not distinguish between normal and plugin repositories because they are usually not
  * distinguished when deploying and they share the same local repository, so it's likely possible
  * to sneak plugin artifacts in by first resolving a normal artifact.
