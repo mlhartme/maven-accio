@@ -27,14 +27,14 @@ import org.apache.maven.project.ProjectBuildingRequest;
 import org.apache.maven.project.ProjectBuildingResult;
 import org.codehaus.plexus.PlexusContainer;
 import org.codehaus.plexus.component.repository.exception.ComponentLookupException;
-import org.eclipse.aether.DefaultRepositorySystemSession;
 import org.eclipse.aether.RepositoryException;
-import org.eclipse.aether.RepositorySystem;
+import org.eclipse.aether.RepositorySystemSession;
 import org.eclipse.aether.artifact.Artifact;
 import org.eclipse.aether.artifact.ArtifactType;
 import org.eclipse.aether.artifact.DefaultArtifact;
 import org.eclipse.aether.deployment.DeployRequest;
 import org.eclipse.aether.deployment.DeploymentException;
+import org.eclipse.aether.internal.impl.DefaultRepositorySystem;
 import org.eclipse.aether.repository.RemoteRepository;
 import org.eclipse.aether.resolution.ArtifactRequest;
 import org.eclipse.aether.resolution.ArtifactResolutionException;
@@ -63,8 +63,8 @@ public class Maven implements AutoCloseable {
     //--
 
     private final PlexusContainer container;
-    private final RepositorySystem repositorySystem;
-    private final DefaultRepositorySystemSession repositorySession;
+    private final DefaultRepositorySystem repositorySystem;
+    private final RepositorySystemSession repositorySession;
 
     /** duplicates repositorySession.getLocalRepository because ProjectBuilder still needs it */
     private final ArtifactRepository localLegacy;

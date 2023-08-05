@@ -21,7 +21,6 @@ import org.apache.maven.artifact.repository.MavenArtifactRepository;
 import org.apache.maven.artifact.repository.layout.ArtifactRepositoryLayout;
 import org.apache.maven.artifact.repository.layout.DefaultRepositoryLayout;
 import org.apache.maven.project.ProjectBuilder;
-import org.apache.maven.project.ProjectBuildingHelper;
 import org.codehaus.plexus.component.repository.exception.ComponentLookupException;
 import org.eclipse.aether.repository.Authentication;
 import org.eclipse.aether.repository.Proxy;
@@ -30,7 +29,6 @@ import org.eclipse.aether.repository.RepositoryPolicy;
 import org.eclipse.aether.util.repository.AuthenticationBuilder;
 
 import java.io.File;
-import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -44,13 +42,8 @@ public record LegacyConfig(ProjectBuilder builder,
         List<ArtifactRepository> pluginRepositoriesLegacy;
 
         try {
-            repositoriesLegacy = new ArrayList<>();
             repositoriesLegacy = config.repositories().stream().map(LegacyConfig::toLegacy).toList();
             pluginRepositoriesLegacy = config.pluginRepositories().stream().map(LegacyConfig::toLegacy).toList();
-            PluginRepositoryBlocker pm = (PluginRepositoryBlocker) config.container().lookup(ProjectBuildingHelper.class);
-            for (var repo : pluginRepositoriesLegacy) {
-                pm.allow(repo.getUrl());
-            }
             return new LegacyConfig(config.container().lookup(ProjectBuilder.class),
                     localToLegacy(config.repositorySession().getLocalRepository().getBasedir()),
                     repositoriesLegacy, pluginRepositoriesLegacy);
@@ -66,6 +59,7 @@ public record LegacyConfig(ProjectBuilder builder,
                 .build();
         return toLegacy(tmp);
     }
+
     public static ArtifactRepository toLegacy(RemoteRepository repo) {
         MavenArtifactRepository result = new MavenArtifactRepository(
                 repo.getId(), repo.getUrl(), getLayout(repo),

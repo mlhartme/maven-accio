@@ -16,6 +16,7 @@
 package net.oneandone.maven.summon;
 
 import org.apache.maven.classrealm.ClassRealmManager;
+import org.apache.maven.project.ProjectBuildingHelper;
 import org.apache.maven.repository.internal.ArtifactDescriptorUtils;
 import org.apache.maven.repository.internal.MavenRepositorySystemUtils;
 import org.apache.maven.settings.Mirror;
@@ -37,10 +38,11 @@ import org.codehaus.plexus.classworlds.ClassWorld;
 import org.codehaus.plexus.classworlds.realm.ClassRealm;
 import org.codehaus.plexus.component.repository.exception.ComponentLookupException;
 import org.codehaus.plexus.logging.Logger;
-import org.codehaus.plexus.util.xml.pull.XmlPullParserException;
 import org.eclipse.aether.DefaultRepositorySystemSession;
 import org.eclipse.aether.RepositoryListener;
 import org.eclipse.aether.RepositorySystem;
+import org.eclipse.aether.RepositorySystemSession;
+import org.eclipse.aether.internal.impl.DefaultRepositorySystem;
 import org.eclipse.aether.repository.Authentication;
 import org.eclipse.aether.repository.AuthenticationSelector;
 import org.eclipse.aether.repository.LocalRepository;
@@ -56,8 +58,11 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Represents settings and local configuration for Maven.
+ */
 public record Config(PlexusContainer container, Settings settings,
-                     RepositorySystem repositorySystem, DefaultRepositorySystemSession repositorySession,
+                     DefaultRepositorySystem repositorySystem, RepositorySystemSession repositorySession,
                      List<RemoteRepository> repositories, List<RemoteRepository> pluginRepositories) {
     public static Config create() throws IOException {
         return create(null, null, null);
@@ -79,29 +84,28 @@ public record Config(PlexusContainer container, Settings settings,
     public static Config create(File localRepository, File globalSettings, File userSettings,
                                 DefaultPlexusContainer container, String[] allowExtensions,
                                 TransferListener transferListener, RepositoryListener repositoryListener) throws IOException {
-        RepositorySystem system;
+        DefaultRepositorySystem system;
         DefaultRepositorySystemSession session;
         Settings settings;
         List<RemoteRepository> repositories;
         List<RemoteRepository> pluginRepositories;
 
         try {
-            // "good" setup
             ExtensionBlocker rm = (ExtensionBlocker) container.lookup(ClassRealmManager.class);
             if (allowExtensions != null) {
                 rm.getAllowArtifacts().addAll(List.of(allowExtensions));
             }
-            try {
-                settings = loadSettings(globalSettings, userSettings, container);
-            } catch (SettingsBuildingException | XmlPullParserException e) {
-                throw new IOException("cannot load settings: " + e.getMessage(), e);
-            }
-            system = container.lookup(RepositorySystem.class);
+            settings = loadSettings(globalSettings, userSettings, container);
+            system = (DefaultRepositorySystem) container.lookup(RepositorySystem.class);
             session = createSession(transferListener, repositoryListener, system,
                     createLocalRepository(localRepository, settings), settings);
             repositories = new ArrayList<>();
             pluginRepositories = new ArrayList<>();
             createRemoteRepositories(settings, repositories, pluginRepositories);
+            PluginRepositoryBlocker pm = (PluginRepositoryBlocker) container.lookup(ProjectBuildingHelper.class);
+            for (var repo : pluginRepositories) {
+                pm.allow(repo.getUrl());
+            }
             return new Config(container, settings, system, session, repositories, pluginRepositories);
         } catch (ComponentLookupException e) {
             throw new IllegalStateException(e);
@@ -314,11 +318,15 @@ public record Config(PlexusContainer container, Settings settings,
      * @param userSettings null to use default
      */
     public static Settings loadSettings(File globalSettings, File userSettings, DefaultPlexusContainer container)
-            throws IOException, XmlPullParserException, ComponentLookupException, SettingsBuildingException {
+            throws IOException {
         DefaultSettingsBuilder builder;
         SettingsBuildingRequest request;
 
-        builder = (DefaultSettingsBuilder) container.lookup(SettingsBuilder.class);
+        try {
+            builder = (DefaultSettingsBuilder) container.lookup(SettingsBuilder.class);
+        } catch (ComponentLookupException e) {
+            throw new IllegalStateException(e);
+        }
         request = new DefaultSettingsBuildingRequest();
         if (globalSettings == null) {
             globalSettings = new File(locateMavenConf(), "settings.xml");
@@ -328,7 +336,11 @@ public record Config(PlexusContainer container, Settings settings,
         }
         request.setGlobalSettingsFile(globalSettings);
         request.setUserSettingsFile(userSettings);
-        return builder.build(request).getEffectiveSettings();
+        try {
+            return builder.build(request).getEffectiveSettings();
+        } catch (SettingsBuildingException e) {
+            throw new IOException("failed to load settings: " + e.getMessage(), e);
+        }
     }
 
     private static String localRepositoryPathFromMavenOpts() {
