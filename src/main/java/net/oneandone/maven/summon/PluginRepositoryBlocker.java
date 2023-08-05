@@ -20,7 +20,7 @@ public class PluginRepositoryBlocker extends DefaultProjectBuildingHelper {
 
     public PluginRepositoryBlocker() {
         this.allowUrls = new ArrayList<>();
-        allowUrls.add("https://repo.maven.apache.org/maven2"); // TODO
+        // allowUrls.add("https://repo.maven.apache.org/maven2"); // TODO
         addAllowProperty();
         // TODO: add a "created" log statement here, but I was unable to get an logger injected ...
 
@@ -50,7 +50,8 @@ public class PluginRepositoryBlocker extends DefaultProjectBuildingHelper {
             if (!allowUrls.contains(repo.getUrl())) {
                 throw new IllegalArgumentException("repository url blocked: " + repo.getUrl() + "\nAllowed: " + allowUrls);
             }
-            System.out.println("plugin-repo-blocker ok: " + repo.getUrl() + " " + repo.getId() + " " + repo.hashCode());
+            // TODO: log
+            // System.out.println("plugin-repo-blocker ok: " + repo.getUrl() + " " + repo.getId() + " " + repo.hashCode());
         }
         return super.createProjectRealm(project, model, request);
     }

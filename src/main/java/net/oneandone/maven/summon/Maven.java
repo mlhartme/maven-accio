@@ -23,6 +23,7 @@ import org.apache.maven.project.DefaultProjectBuildingRequest;
 import org.apache.maven.project.MavenProject;
 import org.apache.maven.project.ProjectBuilder;
 import org.apache.maven.project.ProjectBuildingException;
+import org.apache.maven.project.ProjectBuildingRequest;
 import org.apache.maven.project.ProjectBuildingResult;
 import org.codehaus.plexus.PlexusContainer;
 import org.codehaus.plexus.component.repository.exception.ComponentLookupException;
@@ -194,6 +195,9 @@ public class Maven implements AutoCloseable {
 
         // TODO
         request.setResolveDependencies(resolve);
+
+        // settings repositories have precedence over pom repositories
+        request.setRepositoryMerging(ProjectBuildingRequest.RepositoryMerging.REQUEST_DOMINANT);
 
         resultList = builder.build(List.of(file), recursive, request);
 
