@@ -66,14 +66,15 @@ public class Maven implements AutoCloseable {
     private final RepositorySystemSession repositorySession;
 
     /**
-     * Used to resolve artifacts.
+     * Used to resolve artifacts. With a standard configuration, this is the list of repositories
+     * defined in settings.
      */
     private final List<RemoteRepository> remote;
 
     private final LegacyRepositories legacy;
 
     // This is the ProjectBuilder used by Maven 3.9.3 to load poms. Note that the respective ProjectBuilderRequest uses
-    // the deprecated org.apache.maven.artifact.repository.ArtifactRepository class, so deprecation warnings are unavailable.
+    // the deprecated org.apache.maven.artifact.repository.ArtifactRepository class, so deprecation warnings are unavoidable.
     private final ProjectBuilder projectBuilder;
 
     public Maven(Config config) {

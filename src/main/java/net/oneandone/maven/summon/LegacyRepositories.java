@@ -36,17 +36,19 @@ public record LegacyRepositories(
         ArtifactRepository local, List<ArtifactRepository> repositories, List<ArtifactRepository> pluginRepositories) {
     public static LegacyRepositories create(Config config) {
         return new LegacyRepositories(
-                localToLegacy(config.repositorySession().getLocalRepository().getBasedir()),
+                toLegacy(localRepo(config.repositorySession().getLocalRepository().getBasedir())),
                 toLegacyList(config.repositories()),
                 toLegacyList(config.pluginRepositories()));
     }
 
-    public static ArtifactRepository localToLegacy(File dir) {
-        RemoteRepository tmp = new RemoteRepository.Builder("local", "typeTODO", dir.toURI().toString())
-                .setReleasePolicy(new RepositoryPolicy(true, RepositoryPolicy.UPDATE_POLICY_ALWAYS, RepositoryPolicy.CHECKSUM_POLICY_IGNORE))
-                .setSnapshotPolicy(new RepositoryPolicy(true, RepositoryPolicy.UPDATE_POLICY_ALWAYS, RepositoryPolicy.CHECKSUM_POLICY_IGNORE))
+    public static RemoteRepository localRepo(File dir) {
+        return new RemoteRepository.Builder("local", "typeTODO", dir.toURI().toString())
+                .setReleasePolicy(localPolicy())
+                .setSnapshotPolicy(localPolicy())
                 .build();
-        return toLegacy(tmp);
+    }
+    private static RepositoryPolicy localPolicy() {
+        return new RepositoryPolicy(true, RepositoryPolicy.UPDATE_POLICY_ALWAYS, RepositoryPolicy.CHECKSUM_POLICY_IGNORE);
     }
 
     public static ArtifactRepository toLegacy(RemoteRepository repo) {
