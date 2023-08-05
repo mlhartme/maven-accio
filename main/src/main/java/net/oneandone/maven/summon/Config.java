@@ -16,6 +16,8 @@
 package net.oneandone.maven.summon;
 
 import org.apache.maven.classrealm.ClassRealmManager;
+import org.apache.maven.project.DefaultProjectBuilder;
+import org.apache.maven.project.ProjectBuilder;
 import org.apache.maven.project.ProjectBuildingHelper;
 import org.apache.maven.settings.Settings;
 import org.apache.maven.settings.building.DefaultSettingsBuilder;
@@ -100,7 +102,9 @@ public class Config {
     public Maven build() throws IOException {
         PlexusContainer container = createContainer();
         Settings settings = loadSettings(container, globalSettings, userSettings);
+        DefaultProjectBuilder projectBuilder;
         try {
+
             ExtensionBlocker rm = (ExtensionBlocker) container.lookup(ClassRealmManager.class);
             if (allowExtensions != null) {
                 rm.getAllowArtifacts().addAll(allowExtensions);
@@ -111,6 +115,7 @@ public class Config {
                     pm.allow(url);
                 }
             }
+            projectBuilder = (DefaultProjectBuilder) container.lookup(ProjectBuilder.class);
         } catch (ComponentLookupException e) {
             throw new IllegalStateException(e);
         }
@@ -119,7 +124,7 @@ public class Config {
                 localRepository, transferListener, repositoryListener);
         LegacyRepositories legacy = LegacyRepositories.create(repositories);
         return new Maven(container, repositories.repositorySystem(), repositories.repositorySession(),
-                repositories.repositories(), legacy, repositories.projectBuilder());
+                repositories.repositories(), legacy, projectBuilder);
     }
 
     public static DefaultPlexusContainer createContainer() {

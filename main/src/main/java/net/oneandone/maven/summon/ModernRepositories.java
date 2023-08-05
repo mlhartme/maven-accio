@@ -1,7 +1,5 @@
 package net.oneandone.maven.summon;
 
-import org.apache.maven.project.DefaultProjectBuilder;
-import org.apache.maven.project.ProjectBuilder;
 import org.apache.maven.repository.internal.ArtifactDescriptorUtils;
 import org.apache.maven.repository.internal.MavenRepositorySystemUtils;
 import org.apache.maven.settings.Mirror;
@@ -32,7 +30,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 public record ModernRepositories(DefaultRepositorySystem repositorySystem, RepositorySystemSession repositorySession,
-                                 DefaultProjectBuilder projectBuilder,
                                  List<RemoteRepository> repositories, List<RemoteRepository> pluginRepositories) {
     public static ModernRepositories create(PlexusContainer container, Settings settings, File localRepository,
                                             TransferListener transferListener, RepositoryListener repositoryListener) throws IOException {
@@ -48,7 +45,7 @@ public record ModernRepositories(DefaultRepositorySystem repositorySystem, Repos
             repositories = new ArrayList<>();
             pluginRepositories = new ArrayList<>();
             createRemoteRepositories(settings, repositories, pluginRepositories);
-            return new ModernRepositories(system, session, (DefaultProjectBuilder) container.lookup(ProjectBuilder.class), repositories, pluginRepositories);
+            return new ModernRepositories(system, session, repositories, pluginRepositories);
         } catch (ComponentLookupException e) {
             throw new IllegalStateException(e);
         }
