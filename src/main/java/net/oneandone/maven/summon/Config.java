@@ -61,7 +61,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Represents settings and local configuration for Maven.
+ * Represents configuration with settings and local configuration.
  */
 public record Config(PlexusContainer container, Settings settings,
                      DefaultRepositorySystem repositorySystem, RepositorySystemSession repositorySession,
@@ -230,6 +230,7 @@ public record Config(PlexusContainer container, Settings settings,
                         }
                         return new AuthenticationBuilder().addUsername(server.getUsername()).addPassword(server.getPassword()).build();
                     }
+                    throw new UnsupportedOperationException();
                 }
                 return null;
             }
@@ -242,8 +243,6 @@ public record Config(PlexusContainer container, Settings settings,
                 }
                 return null;
             }
-
-
         });
         if (repositoryListener != null) {
             session.setRepositoryListener(repositoryListener);
