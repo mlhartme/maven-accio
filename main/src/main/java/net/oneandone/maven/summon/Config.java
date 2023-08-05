@@ -84,6 +84,8 @@ public class Config {
         Repositories repositories = Repositories.create(
                 localRepository, globalSettings, userSettings, allowExtensions, allowPomRepositories,
                 transferListener, repositoryListener);
-        return new Maven(repositories);
+        LegacyRepositories legacy = LegacyRepositories.create(repositories);
+        return new Maven(repositories.container(), repositories.repositorySystem(), repositories.repositorySession(),
+                repositories.repositories(), legacy, repositories.projectBuilder());
     }
 }

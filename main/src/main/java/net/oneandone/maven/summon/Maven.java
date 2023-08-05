@@ -53,6 +53,7 @@ import java.util.List;
 import java.util.Properties;
 
 public class Maven implements AutoCloseable {
+    /** Creates an instance with standard configuration. Use Config class to create an customited instance. */
     public static Maven create() throws IOException {
         return new Config().build();
     }
@@ -75,20 +76,19 @@ public class Maven implements AutoCloseable {
     // the deprecated org.apache.maven.artifact.repository.ArtifactRepository class, so deprecation warnings are unavoidable.
     private final ProjectBuilder projectBuilder;
 
-    public Maven(Repositories repositories) {
-        this(repositories, LegacyRepositories.create(repositories));
-    }
-
-    public Maven(Repositories repositories, LegacyRepositories legacyRepositories) {
-        this.container = repositories.container();
-        this.repositorySystem = repositories.repositorySystem();
-        this.repositorySession = repositories.repositorySession();
-        this.remote = repositories.repositories();
-        this.projectBuilder = repositories.projectBuilder();
-        this.legacy = legacyRepositories;
-    }
-
     //--
+
+    public Maven(PlexusContainer container,
+                 DefaultRepositorySystem repositorySystem, RepositorySystemSession repositorySession,
+                 List<RemoteRepository> remote, LegacyRepositories legacy, ProjectBuilder projectBuilder) {
+        this.container = container;
+        this.repositorySystem = repositorySystem;
+        this.repositorySession = repositorySession;
+        this.remote = remote;
+        this.legacy = legacy;
+        this.projectBuilder = projectBuilder;
+    }
+
 
     public File getLocalRepositoryDir() {
         return repositorySession.getLocalRepository().getBasedir();
