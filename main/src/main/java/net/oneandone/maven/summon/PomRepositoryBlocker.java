@@ -28,7 +28,7 @@ public class PomRepositoryBlocker extends DefaultProjectBuildingHelper {
         this.allowedRepositories = new ArrayList<>();
         this.blockedRepositories = new ArrayList<>();
         addAllowProperty();
-        allowUrls.add(Config.CENTRAL_URL); // TODO
+        allowUrls.add(Repositories.CENTRAL_URL); // TODO
         // TODO: add a "created" log statement here, but I was unable to get an logger injected ...
 
     }

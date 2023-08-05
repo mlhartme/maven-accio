@@ -49,7 +49,7 @@ public class MavenTest {
     // run this with -Xmx32m to check for memory leaks
     public static void main(String[] args) throws IOException, ProjectBuildingException {
         for (int i = 0; i < 10000; i++) {
-            try (Maven maven = new Maven(Config.create())) {
+            try (Maven maven = new Config().build()) {
                 MavenProject pom;
                 pom = maven.loadPom(new File("pom.xml"));
                 System.out.println(i + " " + pom.getArtifact());
@@ -80,7 +80,10 @@ public class MavenTest {
         if (!repo.exists()) {
             repo.mkdirs();
         }
-        maven = new Maven(Config.create(repo, null, new File(project, "src/test/settings.xml")));
+        maven = new Config()
+                .localRepository(repo)
+                .userSettings(new File(project, "src/test/settings.xml"))
+                .build();
     }
 
     @After
@@ -96,7 +99,7 @@ public class MavenTest {
     @Test
     public void pluginRepositories() throws ProjectBuildingException {
         MavenProject pom = maven.loadPom(file("src/test/with-plugin-repository.pom"));
-        assertEquals(List.of(SONATYPE, Config.CENTRAL_URL), pom.getRemotePluginRepositories().stream().map(RemoteRepository::getUrl).toList());
+        assertEquals(List.of(SONATYPE, Repositories.CENTRAL_URL), pom.getRemotePluginRepositories().stream().map(RemoteRepository::getUrl).toList());
     }
 
     @Test
@@ -104,11 +107,10 @@ public class MavenTest {
         File file = file("src/test/multi-with-plugin-repository/child/pom.xml");
         String extra = "https://some.extra.repo/";
         MavenProject pom = maven.loadPom(file);
-        assertEquals(List.of(SONATYPE, Config.CENTRAL_URL), pom.getRemotePluginRepositories().stream().map(RemoteRepository::getUrl).toList());
+        assertEquals(List.of(SONATYPE, Repositories.CENTRAL_URL), pom.getRemotePluginRepositories().stream().map(RemoteRepository::getUrl).toList());
 
-        pom = new Maven(Config.create(null, null, null, null,
-                new String[] { extra })).loadPom(file);
-        assertEquals(List.of(Config.CENTRAL_URL, extra), pom.getRemotePluginRepositories().stream().map(RemoteRepository::getUrl).toList());
+        pom = new Config().allowPomRepository(extra).build().loadPom(file);
+        assertEquals(List.of(Repositories.CENTRAL_URL, extra), pom.getRemotePluginRepositories().stream().map(RemoteRepository::getUrl).toList());
     }
 
     //--
@@ -339,7 +341,7 @@ public class MavenTest {
 
     @Test
     public void pluginExtensionAllowed() throws IOException, ProjectBuildingException {
-        Maven m = new Maven(Config.create(null, null, null, new String[] { "org.apache.felix:maven-bundle-plugin" }, null));
+        Maven m = new Config().allowExtension("org.apache.felix:maven-bundle-plugin").build();
         MavenProject pom = m.loadPom(file("src/test/with-plugin-extension.pom"));
         assertEquals("true", pom.getModel().getBuild().getPluginsAsMap().get("org.apache.felix:maven-bundle-plugin").getExtensions());
         assertEquals(List.of(EXTENSION_GAV), m.getLoadedExtensions());
@@ -356,7 +358,7 @@ public class MavenTest {
 
     @Test
     public void buildExtensionAllowed() throws IOException, ProjectBuildingException {
-        Maven m = new Maven(Config.create(null, null, null, new String[] { "org.apache.felix:maven-bundle-plugin" }, null));
+        Maven m = new Config().allowExtension("org.apache.felix:maven-bundle-plugin").build();
         MavenProject pom = m.loadPom(file("src/test/with-build-extension.pom"));
         assertEquals(1, pom.getModel().getBuild().getExtensions().size());
         assertEquals(List.of(EXTENSION_GAV), m.getLoadedExtensions());

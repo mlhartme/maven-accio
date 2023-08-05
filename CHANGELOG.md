@@ -10,6 +10,7 @@
 ### 4.0.0 (pending)
 
 * renamed to Maven Summon
+* extracted setup code into a Config class
 * removed groupName argument from deploy methods, because it uses compat code
 * Maven is AutoClosable now, close() invokes container.dispose() to fix memory leak
 * added PomRepositoryBlocker than can block normal or plugin repositories being added in poms; default is to block all

@@ -34,11 +34,11 @@ import java.util.List;
  * project building requests
  */
 public record LegacyRepositories(ArtifactRepository local, List<ArtifactRepository> repositories, List<ArtifactRepository> pluginRepositories) {
-    public static LegacyRepositories create(Config config) {
+    public static LegacyRepositories create(Repositories repositories) {
         return new LegacyRepositories(
-                toLegacy(config.repositorySession(), localRepo(config.repositorySession().getLocalRepository().getBasedir())),
-                toLegacyList(config.repositorySession(), config.repositories()),
-                toLegacyList(config.repositorySession(), config.pluginRepositories()));
+                toLegacy(repositories.repositorySession(), localRepo(repositories.repositorySession().getLocalRepository().getBasedir())),
+                toLegacyList(repositories.repositorySession(), repositories.repositories()),
+                toLegacyList(repositories.repositorySession(), repositories.pluginRepositories()));
     }
 
     public static RemoteRepository localRepo(File dir) {
