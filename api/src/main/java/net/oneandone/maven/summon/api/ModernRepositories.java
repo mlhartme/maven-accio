@@ -1,4 +1,4 @@
-package net.oneandone.maven.summon;
+package net.oneandone.maven.summon.api;
 
 import org.apache.maven.repository.internal.ArtifactDescriptorUtils;
 import org.apache.maven.repository.internal.MavenRepositorySystemUtils;

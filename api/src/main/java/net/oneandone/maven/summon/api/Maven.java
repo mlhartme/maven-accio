@@ -13,8 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package net.oneandone.maven.summon;
+package net.oneandone.maven.summon.api;
 
+import net.oneandone.maven.summon.extension.ExtensionBlocker;
 import org.apache.maven.classrealm.ClassRealmManager;
 import org.apache.maven.project.DefaultProjectBuildingRequest;
 import org.apache.maven.project.MavenProject;

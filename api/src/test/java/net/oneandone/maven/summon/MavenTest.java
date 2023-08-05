@@ -15,6 +15,9 @@
  */
 package net.oneandone.maven.summon;
 
+import net.oneandone.maven.summon.api.Config;
+import net.oneandone.maven.summon.api.Maven;
+import net.oneandone.maven.summon.api.ModernRepositories;
 import org.apache.maven.model.Model;
 import org.apache.maven.model.Plugin;
 import org.apache.maven.model.PluginExecution;

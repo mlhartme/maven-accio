@@ -1,4 +1,4 @@
-package net.oneandone.maven.summon;
+package net.oneandone.maven.summon.extension;
 
 import org.apache.maven.artifact.InvalidRepositoryException;
 import org.apache.maven.artifact.repository.ArtifactRepository;

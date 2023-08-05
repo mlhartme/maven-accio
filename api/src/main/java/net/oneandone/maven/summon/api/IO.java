@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package net.oneandone.maven.summon;
+package net.oneandone.maven.summon.api;
 
 import java.io.File;
 import java.io.IOException;

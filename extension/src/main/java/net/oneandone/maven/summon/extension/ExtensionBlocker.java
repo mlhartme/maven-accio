@@ -1,4 +1,4 @@
-package net.oneandone.maven.summon;
+package net.oneandone.maven.summon.extension;
 
 import org.apache.maven.classrealm.ClassRealmManager;
 import org.apache.maven.classrealm.ClassRealmManagerDelegate;
