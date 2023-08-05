@@ -11,6 +11,12 @@ import org.codehaus.plexus.component.annotations.Component;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Blocks repositories from actually being used for dependency or plugin resolution.
+ * Does not distinguish between normal and plugin repositories because they are usually not
+ * distinguished when deploying and they share the same local repository, so it's likely possible
+ * to sneak plugin artifacts in by first resolving a normal artifact.
+ * */
 @Component(role = ProjectBuildingHelper.class)
 public class PomRepositoryBlocker extends DefaultProjectBuildingHelper {
     private List<String> allowUrls;
