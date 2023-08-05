@@ -231,6 +231,7 @@ public record Config(PlexusContainer container,
         return createContainer(null, null, Logger.LEVEL_DISABLED);
     }
 
+    // mimics the respective MavenCli code
     public static DefaultPlexusContainer createContainer(ClassWorld classWorld, ClassRealm realm, int loglevel) {
         DefaultContainerConfiguration config;
         DefaultPlexusContainer container;
@@ -250,6 +251,7 @@ public record Config(PlexusContainer container,
         } catch (PlexusContainerException e) {
             throw new IllegalStateException(e);
         }
+        container.setLookupRealm(null);
         container.getLoggerManager().setThreshold(loglevel);
         return container;
     }
