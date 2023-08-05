@@ -63,7 +63,7 @@ import java.util.List;
 
 public record Config(PlexusContainer container,
                      RepositorySystem repositorySystem, DefaultRepositorySystemSession repositorySession, ProjectBuilder builder,
-                     List<RemoteRepository> remote, ArtifactRepository localLegacy, List<ArtifactRepository> remoteLegacy, List<ArtifactRepository> pluginRemoteLegacy) {
+                     List<RemoteRepository> remote, ArtifactRepository legacyLocal, List<ArtifactRepository> legacyRemote, List<ArtifactRepository> legacyPluginRemote) {
     public static Config create() throws IOException {
         return create(null, null, null);
     }
@@ -90,9 +90,10 @@ public record Config(PlexusContainer container,
         LegacyRepositorySystem legacySystem;
         List<ArtifactRepository> repositoriesLegacy;
         List<ArtifactRepository> pluginRepositoriesLegacy;
-        LocalRepository lr;
+        LocalRepository localRepositoryObj;
 
         try {
+            // "good" setup
             ExtensionBlocker rm = (ExtensionBlocker) container.lookup(ClassRealmManager.class);
             if (allowExtensions != null) {
                 rm.getAllowArtifacts().addAll(List.of(allowExtensions));
@@ -103,8 +104,10 @@ public record Config(PlexusContainer container,
                 throw new IOException("cannot load settings: " + e.getMessage(), e);
             }
             system = container.lookup(RepositorySystem.class);
-            lr = createLocalRepository(localRepository, settings);
-            session = createSession(transferListener, repositoryListener, system, lr, settings);
+            localRepositoryObj = createLocalRepository(localRepository, settings);
+            session = createSession(transferListener, repositoryListener, system, localRepositoryObj, settings);
+
+            // legacy setup - we need redundant ArtifactRepositories for project building requests
             legacySystem = (LegacyRepositorySystem) container.lookup(org.apache.maven.repository.RepositorySystem.class, "default");
             repositoriesLegacy = new ArrayList<>();
             pluginRepositoriesLegacy = new ArrayList<>();
@@ -117,7 +120,7 @@ public record Config(PlexusContainer container,
                 pm.allow(repo.getUrl());
             }
             return new Config(container, system, session, container.lookup(ProjectBuilder.class),
-                    RepositoryUtils.toRepos(repositoriesLegacy), legacySystem.createLocalRepository(lr.getBasedir()), repositoriesLegacy, pluginRepositoriesLegacy);
+                    RepositoryUtils.toRepos(repositoriesLegacy), legacySystem.createLocalRepository(localRepositoryObj.getBasedir()), repositoriesLegacy, pluginRepositoriesLegacy);
         } catch (InvalidRepositoryException | ComponentLookupException e) {
             throw new IllegalStateException(e);
         }
