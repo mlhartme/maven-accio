@@ -66,14 +66,19 @@ public class Maven implements AutoCloseable {
     private final RepositorySystem repositorySystem;
     private final DefaultRepositorySystemSession repositorySession;
 
+    /** duplicates repositorySession.getLocalRepository because ProjectBuilder still needs it */
+    private final ArtifactRepository localLegacy;
+
     /**
      * Used to resolve artifacts.
      */
     private final List<RemoteRepository> remote;
 
-    private final ArtifactRepository localLegacy;
-
-    /** Remote repositories used to load poms. Legacy objects :( */
+    /**
+     * External repositories - i.e. loaded from settings - used to load poms.
+     * Duplicates the remote field with deprecated classes because the ProjectBuilder has not been
+     * switch to RemoteRepository.
+     */
     private final List<ArtifactRepository> remoteLegacy;
     private final List<ArtifactRepository> pluginRemoteLegacy;
 
