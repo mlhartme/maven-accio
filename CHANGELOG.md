@@ -12,7 +12,7 @@
 * renamed to Maven Summon
 * removed groupName argument from deploy methods, because it uses compat code
 * Maven is AutoClosable now, close() invokes container.dispose() to fix memory leak
-* added PluginRepositoryBlocker
+* added PomRepositoryBlocker than can block normal or plugin repositories being added in poms; default is to block all
 * added ExtensionBlocker that can block extension classes/resources being loaded; default is to block all
 * Maven.loadPom 
   * added support to load projects recursively

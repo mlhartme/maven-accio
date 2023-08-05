@@ -76,16 +76,22 @@ public record Config(PlexusContainer container, Settings settings,
      * @param globalSettings null to use default
      * @param userSettings null to use default
      */
-    public static Config create(File localRepository, File globalSettings, File userSettings, String... allowExtensions)
+    public static Config create(File localRepository, File globalSettings, File userSettings) throws IOException {
+        return create(localRepository, globalSettings, userSettings, null, null);
+    }
+
+    public static Config create(File localRepository, File globalSettings, File userSettings,
+                                String[] allowExtensions, String[] allowPomRepositories)
             throws IOException {
-        return create(localRepository, globalSettings, userSettings, createContainer(), allowExtensions, null, null);
+        return create(localRepository, globalSettings, userSettings, createContainer(), allowExtensions, allowPomRepositories,
+                null, null);
     }
 
     /**
      * @param allowExtensions null to allow all, empty array to forbid all
      */
     public static Config create(File localRepository, File globalSettings, File userSettings,
-                                DefaultPlexusContainer container, String[] allowExtensions,
+                                DefaultPlexusContainer container, String[] allowExtensions, String[] allowPomRepositories,
                                 TransferListener transferListener, RepositoryListener repositoryListener) throws IOException {
         DefaultRepositorySystem system;
         DefaultRepositorySystemSession session;
@@ -105,9 +111,11 @@ public record Config(PlexusContainer container, Settings settings,
             repositories = new ArrayList<>();
             pluginRepositories = new ArrayList<>();
             createRemoteRepositories(settings, repositories, pluginRepositories);
-            PluginRepositoryBlocker pm = (PluginRepositoryBlocker) container.lookup(ProjectBuildingHelper.class);
-            for (var repo : pluginRepositories) {
-                pm.allow(repo.getUrl());
+            PomRepositoryBlocker pm = (PomRepositoryBlocker) container.lookup(ProjectBuildingHelper.class);
+            if (allowPomRepositories != null) {
+                for (String url : allowPomRepositories) {
+                    pm.allow(url);
+                }
             }
             return new Config(container, settings, system, session,
                     (DefaultProjectBuilder) container.lookup(ProjectBuilder.class), repositories, pluginRepositories);
@@ -163,6 +171,7 @@ public record Config(PlexusContainer container, Settings settings,
         }
     }
 
+    public static final String CENTRAL_URL = "https://repo.maven.apache.org/maven2";
     private static final org.apache.maven.model.Repository CENTRAL;
     static {
         org.apache.maven.model.RepositoryPolicy release = new org.apache.maven.model.RepositoryPolicy();
@@ -173,8 +182,8 @@ public record Config(PlexusContainer container, Settings settings,
         release.setChecksumPolicy("warn");
         snapshot.setEnabled("false");
         CENTRAL = new org.apache.maven.model.Repository();
-        CENTRAL.setUrl("https://repo.maven.apache.org/maven2");
         CENTRAL.setId("central");
+        CENTRAL.setUrl(CENTRAL_URL);
         CENTRAL.setReleases(release);
         CENTRAL.setSnapshots(snapshot);
     }

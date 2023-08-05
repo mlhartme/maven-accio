@@ -22,6 +22,7 @@ import org.apache.maven.project.MavenProject;
 import org.apache.maven.project.ProjectBuildingException;
 import org.eclipse.aether.RepositoryException;
 import org.eclipse.aether.artifact.DefaultArtifact;
+import org.eclipse.aether.repository.RemoteRepository;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -83,33 +84,33 @@ public class MavenTest {
     }
 
     @After
-    public void after() throws IOException {
+    public void after() {
         maven.close();
     }
 
-    //-- plugin repositories
+    //-- pom repositories
+
+
+    private final String SONATYPE = "https://s01.oss.sonatype.org/content/repositories/snapshots/";
 
     @Test
     public void pluginRepositories() throws ProjectBuildingException {
-        try {
-            maven.loadPom(file("src/test/with-plugin-repository.pom"));
-            fail();
-        } catch (IllegalArgumentException e) {
-            assertTrue(e.getMessage(), e.getMessage().contains("blocked"));
-            assertTrue(e.getMessage(), e.getMessage().contains("https://some.extra.repo/"));
-        }
+        MavenProject pom = maven.loadPom(file("src/test/with-plugin-repository.pom"));
+        assertEquals(List.of(SONATYPE, Config.CENTRAL_URL), pom.getRemotePluginRepositories().stream().map(RemoteRepository::getUrl).toList());
     }
 
     @Test
-    public void pluginRepositoriesInParent() throws ProjectBuildingException {
-        try {
-            maven.loadPom(file("src/test/multi-with-plugin-repository/child/pom.xml"));
-            fail();
-        } catch (IllegalArgumentException e) {
-            assertTrue(e.getMessage(), e.getMessage().contains("blocked"));
-            assertTrue(e.getMessage(), e.getMessage().contains("https://some.extra.repo/"));
-        }
+    public void pluginRepositoriesInParent() throws ProjectBuildingException, IOException {
+        File file = file("src/test/multi-with-plugin-repository/child/pom.xml");
+        String extra = "https://some.extra.repo/";
+        MavenProject pom = maven.loadPom(file);
+        assertEquals(List.of(SONATYPE, Config.CENTRAL_URL), pom.getRemotePluginRepositories().stream().map(RemoteRepository::getUrl).toList());
+
+        pom = new Maven(Config.create(null, null, null, null,
+                new String[] { extra })).loadPom(file);
+        assertEquals(List.of(Config.CENTRAL_URL, extra), pom.getRemotePluginRepositories().stream().map(RemoteRepository::getUrl).toList());
     }
+
     //--
 
     @Test
@@ -338,7 +339,7 @@ public class MavenTest {
 
     @Test
     public void pluginExtensionAllowed() throws IOException, ProjectBuildingException {
-        Maven m = new Maven(Config.create(null, null, null, "org.apache.felix:maven-bundle-plugin"));
+        Maven m = new Maven(Config.create(null, null, null, new String[] { "org.apache.felix:maven-bundle-plugin" }, null));
         MavenProject pom = m.loadPom(file("src/test/with-plugin-extension.pom"));
         assertEquals("true", pom.getModel().getBuild().getPluginsAsMap().get("org.apache.felix:maven-bundle-plugin").getExtensions());
         assertEquals(List.of(EXTENSION_GAV), m.getLoadedExtensions());
@@ -355,7 +356,7 @@ public class MavenTest {
 
     @Test
     public void buildExtensionAllowed() throws IOException, ProjectBuildingException {
-        Maven m = new Maven(Config.create(null, null, null, "org.apache.felix:maven-bundle-plugin"));
+        Maven m = new Maven(Config.create(null, null, null, new String[] { "org.apache.felix:maven-bundle-plugin" }, null));
         MavenProject pom = m.loadPom(file("src/test/with-build-extension.pom"));
         assertEquals(1, pom.getModel().getBuild().getExtensions().size());
         assertEquals(List.of(EXTENSION_GAV), m.getLoadedExtensions());
