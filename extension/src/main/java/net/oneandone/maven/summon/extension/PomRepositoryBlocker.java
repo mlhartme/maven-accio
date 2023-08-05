@@ -7,7 +7,9 @@ import org.apache.maven.project.DefaultProjectBuildingHelper;
 import org.apache.maven.project.ProjectBuildingHelper;
 import org.apache.maven.project.ProjectBuildingRequest;
 import org.codehaus.plexus.component.annotations.Component;
+import org.codehaus.plexus.logging.Logger;
 
+import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -21,18 +23,18 @@ import java.util.List;
  * */
 @Component(role = ProjectBuildingHelper.class)
 public class PomRepositoryBlocker extends DefaultProjectBuildingHelper {
+    private final String logPrefix;
     private List<String> allowUrls;
     private final List<Repository> allowedRepositories;
     private final List<Repository> blockedRepositories;
 
     public PomRepositoryBlocker() {
+        this.logPrefix = getClass().getSimpleName() + ": ";
         this.allowUrls = new ArrayList<>();
         this.allowedRepositories = new ArrayList<>();
         this.blockedRepositories = new ArrayList<>();
         addAllowProperty();
         allowUrls.add("https://repo.maven.apache.org/maven2"); // TODO
-        // TODO: add a "created" log statement here, but I was unable to get an logger injected ...
-
     }
 
     public void addAllowProperty() {
@@ -50,6 +52,27 @@ public class PomRepositoryBlocker extends DefaultProjectBuildingHelper {
         allowUrls.add(url);
     }
 
+    // TODO: I'm unable to get the logger injected properly ...
+    private Logger lazyLogger;
+    private Logger logger() {
+        if (lazyLogger == null) {
+            Field field;
+            try {
+                field = getClass().getSuperclass().getDeclaredField("logger");
+            } catch (NoSuchFieldException e) {
+                throw new IllegalStateException(e);
+            }
+            field.setAccessible(true);
+            try {
+                lazyLogger = (Logger) field.get(this);
+            } catch (IllegalAccessException e) {
+                throw new IllegalStateException(e);
+            }
+            lazyLogger.info(logPrefix + "created, allow " + allowUrls);
+        }
+        return lazyLogger;
+    }
+
     @Override
     public List<ArtifactRepository> createArtifactRepositories(
             List<Repository> pomRepositories, List<ArtifactRepository> externalRepositories, ProjectBuildingRequest request) throws InvalidRepositoryException {
@@ -60,10 +83,10 @@ public class PomRepositoryBlocker extends DefaultProjectBuildingHelper {
             if (allowUrls.contains(repo.getUrl())) {
                 allowedRepositories.add(repo);
                 filtered.add(repo);
-                // System.out.println("pom repository allowed: " + repo.getUrl());
+                logger().info(logPrefix + "pom repository allowed: " + repo.getUrl());
             } else {
                 blockedRepositories.add(repo);
-                System.out.println("pom repository blocked: " + repo.getUrl() + "\nAllowed: " + allowUrls);
+                logger().warn(logPrefix + "pom repository blocked: " + repo.getUrl());
             }
         }
         return super.createArtifactRepositories(filtered, externalRepositories, request);
