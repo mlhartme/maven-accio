@@ -16,6 +16,8 @@
 package net.oneandone.maven.summon;
 
 import org.apache.maven.classrealm.ClassRealmManager;
+import org.apache.maven.project.DefaultProjectBuilder;
+import org.apache.maven.project.ProjectBuilder;
 import org.apache.maven.project.ProjectBuildingHelper;
 import org.apache.maven.repository.internal.ArtifactDescriptorUtils;
 import org.apache.maven.repository.internal.MavenRepositorySystemUtils;
@@ -63,6 +65,7 @@ import java.util.List;
  */
 public record Config(PlexusContainer container, Settings settings,
                      DefaultRepositorySystem repositorySystem, RepositorySystemSession repositorySession,
+                     DefaultProjectBuilder projectBuilder,
                      List<RemoteRepository> repositories, List<RemoteRepository> pluginRepositories) {
     public static Config create() throws IOException {
         return create(null, null, null);
@@ -106,7 +109,8 @@ public record Config(PlexusContainer container, Settings settings,
             for (var repo : pluginRepositories) {
                 pm.allow(repo.getUrl());
             }
-            return new Config(container, settings, system, session, repositories, pluginRepositories);
+            return new Config(container, settings, system, session,
+                    (DefaultProjectBuilder) container.lookup(ProjectBuilder.class), repositories, pluginRepositories);
         } catch (ComponentLookupException e) {
             throw new IllegalStateException(e);
         }

@@ -67,7 +67,7 @@ public class Maven implements AutoCloseable {
     private final RepositorySystemSession repositorySession;
 
     /** duplicates repositorySession.getLocalRepository because ProjectBuilder still needs it */
-    private final ArtifactRepository localLegacy;
+    private final ArtifactRepository legacyLocal;
 
     /**
      * Used to resolve artifacts.
@@ -84,7 +84,7 @@ public class Maven implements AutoCloseable {
 
     // This is the ProjectBuilder used by Maven 3.9.3 to load poms. Note that the respective ProjectBuilderRequest uses
     // the deprecated org.apache.maven.artifact.repository.ArtifactRepository class, so deprecation warnings are unavailable.
-    private final ProjectBuilder builder;
+    private final ProjectBuilder projectBuilder;
 
     public Maven(Config config) {
         this(config, LegacyConfig.create(config));
@@ -95,8 +95,8 @@ public class Maven implements AutoCloseable {
         this.repositorySystem = config.repositorySystem();
         this.repositorySession = config.repositorySession();
         this.remote = config.repositories();
-        this.builder = legacyConfig.builder();
-        this.localLegacy = legacyConfig.legacyLocal();
+        this.projectBuilder = config.projectBuilder();
+        this.legacyLocal = legacyConfig.legacyLocal();
         this.legacyRemote = legacyConfig.legacyRemote();
         this.legacyPluginRemote = legacyConfig.legacyPluginRemote();
     }
@@ -186,7 +186,7 @@ public class Maven implements AutoCloseable {
 
         // from DefaultMavenExecutionRequest.getProjectBuildingRequest()
         request = new DefaultProjectBuildingRequest();
-        request.setLocalRepository(localLegacy);
+        request.setLocalRepository(legacyLocal);
         request.setSystemProperties(System.getProperties());
         if (userProperties != null) {
             request.setUserProperties(userProperties);
@@ -210,7 +210,7 @@ public class Maven implements AutoCloseable {
         // of the source is the opposite
         request.setRepositoryMerging(ProjectBuildingRequest.RepositoryMerging.REQUEST_DOMINANT);
 
-        resultList = builder.build(List.of(file), recursive, request);
+        resultList = projectBuilder.build(List.of(file), recursive, request);
 
         pomList = new ArrayList<>();
         for (ProjectBuildingResult result : resultList) {

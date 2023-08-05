@@ -20,8 +20,6 @@ import org.apache.maven.artifact.repository.ArtifactRepositoryPolicy;
 import org.apache.maven.artifact.repository.MavenArtifactRepository;
 import org.apache.maven.artifact.repository.layout.ArtifactRepositoryLayout;
 import org.apache.maven.artifact.repository.layout.DefaultRepositoryLayout;
-import org.apache.maven.project.ProjectBuilder;
-import org.codehaus.plexus.component.repository.exception.ComponentLookupException;
 import org.eclipse.aether.repository.Authentication;
 import org.eclipse.aether.repository.Proxy;
 import org.eclipse.aether.repository.RemoteRepository;
@@ -34,21 +32,15 @@ import java.util.List;
  * Legacy repositories. This is redundant config, but we need ArtifactRepositories for the project build and
  * project building requests
  */
-public record LegacyConfig(ProjectBuilder builder,
-                           ArtifactRepository legacyLocal, List<ArtifactRepository> legacyRemote, List<ArtifactRepository> legacyPluginRemote) {
+public record LegacyConfig(ArtifactRepository legacyLocal, List<ArtifactRepository> legacyRemote, List<ArtifactRepository> legacyPluginRemote) {
     public static LegacyConfig create(Config config) {
         List<ArtifactRepository> repositoriesLegacy;
         List<ArtifactRepository> pluginRepositoriesLegacy;
 
-        try {
-            repositoriesLegacy = toLegacyList(config.repositories());
-            pluginRepositoriesLegacy = toLegacyList(config.pluginRepositories());
-            return new LegacyConfig(config.container().lookup(ProjectBuilder.class),
-                    localToLegacy(config.repositorySession().getLocalRepository().getBasedir()),
-                    repositoriesLegacy, pluginRepositoriesLegacy);
-        } catch (ComponentLookupException e) {
-            throw new IllegalStateException(e);
-        }
+        repositoriesLegacy = toLegacyList(config.repositories());
+        pluginRepositoriesLegacy = toLegacyList(config.pluginRepositories());
+        return new LegacyConfig(localToLegacy(config.repositorySession().getLocalRepository().getBasedir()),
+                repositoriesLegacy, pluginRepositoriesLegacy);
     }
 
     public static ArtifactRepository localToLegacy(File dir) {
