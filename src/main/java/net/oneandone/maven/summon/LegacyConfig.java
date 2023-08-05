@@ -26,7 +26,6 @@ import org.eclipse.aether.repository.Authentication;
 import org.eclipse.aether.repository.Proxy;
 import org.eclipse.aether.repository.RemoteRepository;
 import org.eclipse.aether.repository.RepositoryPolicy;
-import org.eclipse.aether.util.repository.AuthenticationBuilder;
 
 import java.io.File;
 import java.util.List;
@@ -64,10 +63,10 @@ public record LegacyConfig(ProjectBuilder builder,
         MavenArtifactRepository result = new MavenArtifactRepository(
                 repo.getId(), repo.getUrl(), getLayout(repo),
                 policy(repo.getPolicy(true)), policy(repo.getPolicy(false)));
-        /*result.setAuthentication(null); // TODO
-        result.setMirroredRepositories(List.of()); // TODO
-        result.setBlacklisted(false); // TODO
-        result.setProxy(null); // TODO*/
+        result.setBlacklisted(repo.isBlocked());
+        result.setAuthentication(toAuthentication(repo.getAuthentication()));
+        // TODO result.setMirroredRepositories();
+        result.setProxy(toProxy(repo.getProxy()));
         return result;
     }
 
@@ -80,23 +79,27 @@ public record LegacyConfig(ProjectBuilder builder,
         return new ArtifactRepositoryPolicy(policy.isEnabled(), policy.getUpdatePolicy(), policy.getChecksumPolicy());
     }
 
-    private static Authentication toAuthentication(org.apache.maven.artifact.repository.Authentication auth) {
-        Authentication result = null;
+    private static org.apache.maven.artifact.repository.Authentication toAuthentication(Authentication auth) {
+        org.apache.maven.artifact.repository.Authentication result = null;
         if (auth != null) {
-            AuthenticationBuilder authBuilder = new AuthenticationBuilder();
-            authBuilder.addUsername(auth.getUsername()).addPassword(auth.getPassword());
-            authBuilder.addPrivateKey(auth.getPrivateKey(), auth.getPassphrase());
-            result = authBuilder.build();
+            // TODO
+            throw new UnsupportedOperationException(auth.getClass().toString());
         }
         return result;
     }
 
-    private static Proxy toProxy(org.apache.maven.repository.Proxy proxy) {
-        Proxy result = null;
+    private static org.apache.maven.repository.Proxy toProxy(Proxy proxy) {
+        org.apache.maven.repository.Proxy result = null;
         if (proxy != null) {
-            AuthenticationBuilder authBuilder = new AuthenticationBuilder();
-            authBuilder.addUsername(proxy.getUserName()).addPassword(proxy.getPassword());
-            result = new Proxy(proxy.getProtocol(), proxy.getHost(), proxy.getPort(), authBuilder.build());
+            result = new org.apache.maven.repository.Proxy();
+            result.setProtocol(proxy.getType());
+            result.setHost(proxy.getHost());
+            result.setPort(proxy.getPort());
+            var auth = toAuthentication(proxy.getAuthentication());
+            if (auth != null) {
+                result.setUserName(auth.getUsername());
+                result.setPassword(auth.getPassword());
+            }
         }
         return result;
     }
