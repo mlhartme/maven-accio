@@ -20,7 +20,8 @@ import org.apache.maven.artifact.repository.ArtifactRepositoryPolicy;
 import org.apache.maven.artifact.repository.MavenArtifactRepository;
 import org.apache.maven.artifact.repository.layout.ArtifactRepositoryLayout;
 import org.apache.maven.artifact.repository.layout.DefaultRepositoryLayout;
-import org.eclipse.aether.repository.Authentication;
+import org.eclipse.aether.RepositorySystemSession;
+import org.eclipse.aether.repository.AuthenticationContext;
 import org.eclipse.aether.repository.Proxy;
 import org.eclipse.aether.repository.RemoteRepository;
 import org.eclipse.aether.repository.RepositoryPolicy;
@@ -36,9 +37,9 @@ public record LegacyRepositories(
         ArtifactRepository local, List<ArtifactRepository> repositories, List<ArtifactRepository> pluginRepositories) {
     public static LegacyRepositories create(Config config) {
         return new LegacyRepositories(
-                toLegacy(localRepo(config.repositorySession().getLocalRepository().getBasedir())),
-                toLegacyList(config.repositories()),
-                toLegacyList(config.pluginRepositories()));
+                toLegacy(config.repositorySession(), localRepo(config.repositorySession().getLocalRepository().getBasedir())),
+                toLegacyList(config.repositorySession(), config.repositories()),
+                toLegacyList(config.repositorySession(), config.pluginRepositories()));
     }
 
     public static RemoteRepository localRepo(File dir) {
@@ -51,19 +52,19 @@ public record LegacyRepositories(
         return new RepositoryPolicy(true, RepositoryPolicy.UPDATE_POLICY_ALWAYS, RepositoryPolicy.CHECKSUM_POLICY_IGNORE);
     }
 
-    public static ArtifactRepository toLegacy(RemoteRepository repo) {
+    public static ArtifactRepository toLegacy(RepositorySystemSession session, RemoteRepository repo) {
         MavenArtifactRepository result = new MavenArtifactRepository(
                 repo.getId(), repo.getUrl(), toLayout(repo),
                 toPolicy(repo.getPolicy(true)), toPolicy(repo.getPolicy(false)));
         result.setBlacklisted(repo.isBlocked());
-        result.setAuthentication(toAuthentication(repo.getAuthentication()));
-        result.setMirroredRepositories(toLegacyList(repo.getMirroredRepositories()));
-        result.setProxy(toProxy(repo.getProxy()));
+        result.setAuthentication(toAuthentication(session, repo));
+        result.setMirroredRepositories(toLegacyList(session, repo.getMirroredRepositories()));
+        result.setProxy(toProxy(session, repo));
         return result;
     }
 
-    public static List<ArtifactRepository> toLegacyList(List<RemoteRepository> lst) {
-        return lst.stream().map(LegacyRepositories::toLegacy).toList();
+    public static List<ArtifactRepository> toLegacyList(RepositorySystemSession session, List<RemoteRepository> lst) {
+        return lst.stream().map(repo -> toLegacy(session, repo)).toList();
     }
 
     public static ArtifactRepositoryLayout toLayout(RemoteRepository repo) {
@@ -81,23 +82,32 @@ public record LegacyRepositories(
         return new ArtifactRepositoryPolicy(policy.isEnabled(), policy.getUpdatePolicy(), policy.getChecksumPolicy());
     }
 
-    private static org.apache.maven.artifact.repository.Authentication toAuthentication(Authentication auth) {
-        org.apache.maven.artifact.repository.Authentication result = null;
-        if (auth != null) {
-            // TODO
-            throw new UnsupportedOperationException(auth.getClass().toString());
+    private static org.apache.maven.artifact.repository.Authentication toAuthentication(RepositorySystemSession session, RemoteRepository repo) {
+        org.apache.maven.artifact.repository.Authentication result;
+        AuthenticationContext authCtx = repo.getProxy() == null
+                ? AuthenticationContext.forRepository(session, repo)
+                : AuthenticationContext.forProxy(session, repo);
+        if (authCtx == null) {
+            return null;
+        } else {
+            result = new org.apache.maven.artifact.repository.Authentication(
+                    authCtx.get(AuthenticationContext.USERNAME), authCtx.get(AuthenticationContext.PASSWORD));
+            result.setPrivateKey(authCtx.get(AuthenticationContext.PRIVATE_KEY_PATH));
+            result.setPassphrase(authCtx.get(AuthenticationContext.PRIVATE_KEY_PASSPHRASE));
+            authCtx.close();
+            return result;
         }
-        return result;
     }
 
-    private static org.apache.maven.repository.Proxy toProxy(Proxy proxy) {
+    private static org.apache.maven.repository.Proxy toProxy(RepositorySystemSession session, RemoteRepository repo) {
         org.apache.maven.repository.Proxy result = null;
+        Proxy proxy = repo.getProxy();
         if (proxy != null) {
             result = new org.apache.maven.repository.Proxy();
             result.setProtocol(proxy.getType());
             result.setHost(proxy.getHost());
             result.setPort(proxy.getPort());
-            var auth = toAuthentication(proxy.getAuthentication());
+            var auth = toAuthentication(session, repo);
             if (auth != null) {
                 result.setUserName(auth.getUsername());
                 result.setPassword(auth.getPassword());
