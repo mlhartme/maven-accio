@@ -33,8 +33,7 @@ import java.util.List;
  * Legacy repositories. This is redundant config, but we need ArtifactRepositories for the project builder and
  * project building requests
  */
-public record LegacyRepositories(
-        ArtifactRepository local, List<ArtifactRepository> repositories, List<ArtifactRepository> pluginRepositories) {
+public record LegacyRepositories(ArtifactRepository local, List<ArtifactRepository> repositories, List<ArtifactRepository> pluginRepositories) {
     public static LegacyRepositories create(Config config) {
         return new LegacyRepositories(
                 toLegacy(config.repositorySession(), localRepo(config.repositorySession().getLocalRepository().getBasedir())),

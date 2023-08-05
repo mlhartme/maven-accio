@@ -15,8 +15,6 @@
  */
 package net.oneandone.maven.summon;
 
-import org.apache.maven.artifact.repository.metadata.GroupRepositoryMetadata;
-import org.apache.maven.artifact.repository.metadata.MetadataBridge;
 import org.apache.maven.classrealm.ClassRealmManager;
 import org.apache.maven.project.DefaultProjectBuildingRequest;
 import org.apache.maven.project.MavenProject;
@@ -289,48 +287,24 @@ public class Maven implements AutoCloseable {
 
     /** convenience method */
     public void deploy(RemoteRepository target, Artifact... artifacts) throws DeploymentException {
-        deploy(target, null, Arrays.asList(artifacts));
-    }
-
-    /** convenience method */
-    public void deploy(RemoteRepository target, String pluginName, Artifact... artifacts) throws DeploymentException {
-        deploy(target, pluginName, Arrays.asList(artifacts));
+        deploy(target, Arrays.asList(artifacts));
     }
 
     /**
      * You'll usually pass one jar artifact and the corresponding pom artifact.
-     * @param pluginName null if you deploy normal artifacts; none-null for Maven Plugins, that you wish to add a plugin mapping for;
-     *                   specifies the plugin name in this case.
      */
-    public void deploy(RemoteRepository target, String pluginName, List<Artifact> artifacts) throws DeploymentException {
+    public void deploy(RemoteRepository target, List<Artifact> artifacts) throws DeploymentException {
         DeployRequest request;
-        GroupRepositoryMetadata gm;
-        String prefix;
 
         request = new DeployRequest();
         for (Artifact artifact : artifacts) {
             if (artifact.getFile() == null) {
-                throw new IllegalArgumentException(artifact.toString() + " without file");
+                throw new IllegalArgumentException(artifact + " without file");
             }
             request.addArtifact(artifact);
-            if (pluginName != null) {
-                gm = new GroupRepositoryMetadata(artifact.getGroupId());
-                prefix = getGoalPrefixFromArtifactId(artifact.getArtifactId());
-                gm.addPluginMapping(prefix, artifact.getArtifactId(), pluginName);
-                request.addMetadata(new MetadataBridge(gm));
-            }
         }
         request.setRepository(target);
         repositorySystem.deploy(repositorySession, request);
-    }
-
-    /** from PluginDescriptor */
-    public static String getGoalPrefixFromArtifactId(String artifactId) {
-        if ("maven-plugin-plugin".equals(artifactId)) {
-            return "plugin";
-        } else {
-            return artifactId.replaceAll("-?maven-?", "").replaceAll("-?plugin-?", "");
-        }
     }
 
     @Override
