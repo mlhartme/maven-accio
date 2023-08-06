@@ -6,6 +6,7 @@ import org.apache.maven.model.Repository;
 import org.apache.maven.project.DefaultProjectBuildingHelper;
 import org.apache.maven.project.ProjectBuildingHelper;
 import org.apache.maven.project.ProjectBuildingRequest;
+import org.apache.maven.repository.RepositorySystem;
 import org.codehaus.plexus.component.annotations.Component;
 import org.codehaus.plexus.logging.Logger;
 
@@ -34,7 +35,7 @@ public class PomRepositoryBlocker extends DefaultProjectBuildingHelper {
         this.allowedRepositories = new ArrayList<>();
         this.blockedRepositories = new ArrayList<>();
         addAllowProperty();
-        allowUrls.add("https://repo.maven.apache.org/maven2"); // TODO
+        allowUrls.add(RepositorySystem.DEFAULT_REMOTE_REPO_URL); // TODO
     }
 
     public void addAllowProperty() {

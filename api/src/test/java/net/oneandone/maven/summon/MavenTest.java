@@ -99,12 +99,14 @@ public class MavenTest {
     //-- pom repositories
 
 
-    private final String SONATYPE = "https://s01.oss.sonatype.org/content/repositories/snapshots/";
+    private static final String SONATYPE = "https://s01.oss.sonatype.org/content/repositories/snapshots/";
+    private static final String CENTRAL = org.apache.maven.repository.RepositorySystem.DEFAULT_REMOTE_REPO_URL;
+
 
     @Test
     public void pluginRepositories() throws ProjectBuildingException {
         MavenProject pom = maven.loadPom(file("src/test/with-plugin-repository.pom"));
-        assertEquals(List.of(SONATYPE, ModernRepositories.CENTRAL_URL), pom.getRemotePluginRepositories().stream().map(RemoteRepository::getUrl).toList());
+        assertEquals(List.of(SONATYPE, CENTRAL), pom.getRemotePluginRepositories().stream().map(RemoteRepository::getUrl).toList());
     }
 
     @Test
@@ -112,10 +114,10 @@ public class MavenTest {
         File file = file("src/test/multi-with-plugin-repository/child/pom.xml");
         String extra = "https://some.extra.repo/";
         MavenProject pom = maven.loadPom(file);
-        assertEquals(List.of(SONATYPE, ModernRepositories.CENTRAL_URL), pom.getRemotePluginRepositories().stream().map(RemoteRepository::getUrl).toList());
+        assertEquals(List.of(SONATYPE, CENTRAL), pom.getRemotePluginRepositories().stream().map(RemoteRepository::getUrl).toList());
 
         pom = new Config().allowPomRepository(extra).build().loadPom(file);
-        assertEquals(List.of(ModernRepositories.CENTRAL_URL, extra), pom.getRemotePluginRepositories().stream().map(RemoteRepository::getUrl).toList());
+        assertEquals(List.of(CENTRAL, extra), pom.getRemotePluginRepositories().stream().map(RemoteRepository::getUrl).toList());
     }
 
     //--

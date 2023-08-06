@@ -98,7 +98,6 @@ public record ModernRepositories(DefaultRepositorySystem repositorySystem, Repos
         }
     }
 
-    public static final String CENTRAL_URL = "https://repo.maven.apache.org/maven2";
     private static final org.apache.maven.model.Repository CENTRAL;
 
     static {
@@ -110,8 +109,8 @@ public record ModernRepositories(DefaultRepositorySystem repositorySystem, Repos
         release.setChecksumPolicy("warn");
         snapshot.setEnabled("false");
         CENTRAL = new org.apache.maven.model.Repository();
-        CENTRAL.setId("central");
-        CENTRAL.setUrl(CENTRAL_URL);
+        CENTRAL.setId(org.apache.maven.repository.RepositorySystem.DEFAULT_REMOTE_REPO_ID);
+        CENTRAL.setUrl(org.apache.maven.repository.RepositorySystem.DEFAULT_REMOTE_REPO_URL);
         CENTRAL.setReleases(release);
         CENTRAL.setSnapshots(snapshot);
     }
