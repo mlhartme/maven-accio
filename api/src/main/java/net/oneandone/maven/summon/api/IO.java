@@ -22,10 +22,6 @@ public final class IO {
     private IO() {
     }
 
-    public static File userHome() {
-        return new File(System.getProperty("user.home"));
-    }
-
     public static File which(String cmd) {
         String path;
         File file;

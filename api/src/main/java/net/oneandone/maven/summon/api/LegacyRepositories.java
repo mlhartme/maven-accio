@@ -42,7 +42,8 @@ public record LegacyRepositories(ArtifactRepository local, List<ArtifactReposito
     }
 
     public static RemoteRepository localRepo(File dir) {
-        return new RemoteRepository.Builder("local", null, dir.toURI().toString())
+        return new RemoteRepository.Builder(org.apache.maven.repository.RepositorySystem.DEFAULT_LOCAL_REPO_ID,
+                null, dir.toURI().toString())
                 .setReleasePolicy(localPolicy())
                 .setSnapshotPolicy(localPolicy())
                 .build();

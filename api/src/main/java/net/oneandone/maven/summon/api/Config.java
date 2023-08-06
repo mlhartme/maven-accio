@@ -167,6 +167,7 @@ public class Config {
      */
     public static Settings loadSettings(PlexusContainer container, File globalSettings, File userSettings)
             throws IOException {
+        final String fileName = "settings.xml";
         DefaultSettingsBuilder builder;
         SettingsBuildingRequest request;
 
@@ -177,10 +178,10 @@ public class Config {
         }
         request = new DefaultSettingsBuildingRequest();
         if (globalSettings == null) {
-            globalSettings = new File(locateMavenConf(), "settings.xml");
+            globalSettings = new File(locateMavenConf(), fileName);
         }
         if (userSettings == null) {
-            userSettings = new File(IO.userHome(), ".m2/settings.xml");
+            userSettings = new File(org.apache.maven.repository.RepositorySystem.userMavenConfigurationHome, fileName);
         }
         request.setGlobalSettingsFile(globalSettings);
         request.setUserSettingsFile(userSettings);

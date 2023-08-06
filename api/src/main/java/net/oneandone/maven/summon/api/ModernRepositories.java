@@ -219,7 +219,7 @@ public record ModernRepositories(DefaultRepositorySystem repositorySystem, Repos
     //--
 
     public static File defaultLocalRepositoryDir() {
-        return new File(IO.userHome(), ".m2/repository");
+        return org.apache.maven.repository.RepositorySystem.defaultUserLocalRepository;
     }
 
 
