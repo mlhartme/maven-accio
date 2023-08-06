@@ -85,11 +85,7 @@ public record ModernRepositories(DefaultRepositorySystem repositorySystem, Repos
                 pluginCentral = convert(p.getPluginRepositories(), resultPluginRepositories);
             }
         }
-    /* Maven defines the default central repository in its master parent - and not in the default settings, which I'd prefer.
-       As a consequent, central is not always defined when loading the settings.
-       I first added central to repositories only, because legacy repositories are used to load poms which ultimatly load the
-       master parent with it's repository definition. However, the parent might have to be loaded from central, so repositories
-       also need a central definition. */
+        // Mimics org.apache.maven.execution.DefaultMavenExecutionRequestPopulator
         if (!central) {
             resultRepositories.add(createCentral());
         }

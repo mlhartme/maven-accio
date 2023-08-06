@@ -10,13 +10,6 @@
           <id>sonatype</id>
           <name>Sonatype</name>
           <url>https://s01.oss.sonatype.org/content/repositories/snapshots/</url>
-          <layout>default</layout>
-          <snapshots>
-            <enabled>true</enabled>
-          </snapshots>
-          <releases>
-            <enabled>false</enabled>
-          </releases>
         </repository>
       </repositories>
       <pluginRepositories>
@@ -24,13 +17,6 @@
           <id>sonatype</id>
           <name>Sonatype</name>
           <url>https://s01.oss.sonatype.org/content/repositories/snapshots/</url>
-          <layout>default</layout>
-          <snapshots>
-            <enabled>true</enabled>
-          </snapshots>
-          <releases>
-            <enabled>false</enabled>
-          </releases>
         </pluginRepository>
       </pluginRepositories>
     </profile>

@@ -13,8 +13,6 @@
     <pluginRepository>
       <id>extra</id>
       <url>https://some.extra.repo/</url>
-      <releases><enabled>true</enabled></releases>
-      <snapshots><enabled>true</enabled></snapshots>
     </pluginRepository>
   </pluginRepositories>
 </project>
