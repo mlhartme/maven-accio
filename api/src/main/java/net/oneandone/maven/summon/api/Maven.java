@@ -19,7 +19,6 @@ import org.apache.maven.project.DefaultProjectBuildingRequest;
 import org.apache.maven.project.MavenProject;
 import org.apache.maven.project.ProjectBuilder;
 import org.apache.maven.project.ProjectBuildingException;
-import org.apache.maven.project.ProjectBuildingRequest;
 import org.apache.maven.project.ProjectBuildingResult;
 import org.codehaus.plexus.PlexusContainer;
 import org.eclipse.aether.RepositoryException;
@@ -175,10 +174,10 @@ public class Maven implements AutoCloseable {
         // TODO
         request.setResolveDependencies(resolve);
 
-        // settings repositories have precedence over pom repositories
-        // TODO: Maven documentation claims external repositories have precedence but my reading
-        // of the source is the opposite
-        request.setRepositoryMerging(ProjectBuildingRequest.RepositoryMerging.REQUEST_DOMINANT);
+        // Note: do not call
+        //    request.setRepositoryMerging
+        // to stick to the default precedence to POM_DOMINANT
+        // (Maven documentation claims external repositories have precedence - that's achieved by merging settings profiles into the effective pom)
 
         resultList = projectBuilder.build(List.of(file), recursive, request);
 

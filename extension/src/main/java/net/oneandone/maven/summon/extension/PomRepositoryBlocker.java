@@ -6,7 +6,6 @@ import org.apache.maven.model.Repository;
 import org.apache.maven.project.DefaultProjectBuildingHelper;
 import org.apache.maven.project.ProjectBuildingHelper;
 import org.apache.maven.project.ProjectBuildingRequest;
-import org.apache.maven.repository.RepositorySystem;
 import org.codehaus.plexus.component.annotations.Component;
 import org.codehaus.plexus.logging.Logger;
 
@@ -26,16 +25,10 @@ import java.util.List;
 public class PomRepositoryBlocker extends DefaultProjectBuildingHelper {
     private final String logPrefix;
     private List<String> allowUrls;
-    private final List<Repository> allowedRepositories;
-    private final List<Repository> blockedRepositories;
-
     public PomRepositoryBlocker() {
         this.logPrefix = getClass().getSimpleName() + ": ";
         this.allowUrls = new ArrayList<>();
-        this.allowedRepositories = new ArrayList<>();
-        this.blockedRepositories = new ArrayList<>();
         addAllowProperty();
-        allowUrls.add(RepositorySystem.DEFAULT_REMOTE_REPO_URL); // TODO
     }
 
     public void addAllowProperty() {
@@ -74,22 +67,42 @@ public class PomRepositoryBlocker extends DefaultProjectBuildingHelper {
         return lazyLogger;
     }
 
+    /**
+     * @param pomRepositories effective repositories in pom. CAUTION:
+     *                        1) includes central, because that's in Maven's super pom
+     *                        2) includes merged-in profiles from settings, i.e. it contains all external erpositories
+     *                        3) repos with same id are merged, i.e. central can be overridden
+     * @param externalRepositories repos from settings
+     */
     @Override
     public List<ArtifactRepository> createArtifactRepositories(
             List<Repository> pomRepositories, List<ArtifactRepository> externalRepositories, ProjectBuildingRequest request) throws InvalidRepositoryException {
-        List<Repository> filtered;
+        List<ArtifactRepository> origResult;
+        List<ArtifactRepository> filtered;
 
+        origResult = super.createArtifactRepositories(pomRepositories, externalRepositories, request);
         filtered = new ArrayList<>();
-        for (var repo : pomRepositories) {
+        for (var repo : origResult) {
+            if (containsUrl(externalRepositories, repo.getUrl())) {
+                filtered.add(repo);
+                logger().info(logPrefix + "external repository - ok: " + repo.getUrl());
+            }
             if (allowUrls.contains(repo.getUrl())) {
-                allowedRepositories.add(repo);
                 filtered.add(repo);
                 logger().info(logPrefix + "pom repository allowed: " + repo.getUrl());
             } else {
-                blockedRepositories.add(repo);
                 logger().warn(logPrefix + "pom repository blocked: " + repo.getUrl());
             }
         }
-        return super.createArtifactRepositories(filtered, externalRepositories, request);
+        return filtered;
+    }
+
+    private static boolean containsUrl(List<ArtifactRepository> lst, String url) {
+        for (var repo : lst) {
+            if (url.equals(repo.getUrl())) {
+                return true;
+            }
+        }
+        return false;
     }
 }

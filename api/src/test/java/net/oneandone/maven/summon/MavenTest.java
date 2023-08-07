@@ -85,10 +85,14 @@ public class MavenTest {
         if (!repo.exists()) {
             repo.mkdirs();
         }
-        maven = new Config()
+        maven = newConfig().build();
+    }
+
+    private Config newConfig() {
+        return new Config()
                 .localRepository(repo)
-                .userSettings(new File(project, "src/test/settings.xml"))
-                .build();
+                .userSettings(new File(project, "src/test/settings.xml"));
+
     }
 
     @After
@@ -106,7 +110,7 @@ public class MavenTest {
     @Test
     public void pluginRepositories() throws ProjectBuildingException {
         MavenProject pom = maven.loadPom(file("src/test/with-plugin-repository.pom"));
-        assertEquals(List.of(SONATYPE, CENTRAL), pom.getRemotePluginRepositories().stream().map(RemoteRepository::getUrl).toList());
+        assertEquals(List.of(CENTRAL, SONATYPE), pom.getRemotePluginRepositories().stream().map(RemoteRepository::getUrl).toList());
     }
 
     @Test
@@ -114,10 +118,10 @@ public class MavenTest {
         File file = file("src/test/multi-with-plugin-repository/child/pom.xml");
         String extra = "https://some.extra.repo/";
         MavenProject pom = maven.loadPom(file);
-        assertEquals(List.of(SONATYPE, CENTRAL), pom.getRemotePluginRepositories().stream().map(RemoteRepository::getUrl).toList());
+        assertEquals(List.of(CENTRAL, SONATYPE), pom.getRemotePluginRepositories().stream().map(RemoteRepository::getUrl).toList());
 
-        pom = new Config().allowPomRepository(extra).build().loadPom(file);
-        assertEquals(List.of(CENTRAL, extra), pom.getRemotePluginRepositories().stream().map(RemoteRepository::getUrl).toList());
+        pom = newConfig().allowPomRepository(extra).build().loadPom(file);
+        assertEquals(List.of(extra, CENTRAL, SONATYPE), pom.getRemotePluginRepositories().stream().map(RemoteRepository::getUrl).toList());
     }
 
     //--
@@ -362,7 +366,7 @@ public class MavenTest {
 
     @Test
     public void pluginExtensionAllowed() throws IOException, ProjectBuildingException {
-        Maven m = new Config().allowExtension("org.apache.felix:maven-bundle-plugin").build();
+        Maven m = newConfig().allowExtension("org.apache.felix:maven-bundle-plugin").build();
         MavenProject pom = m.loadPom(file("src/test/with-plugin-extension.pom"));
         assertEquals("true", pom.getModel().getBuild().getPluginsAsMap().get("org.apache.felix:maven-bundle-plugin").getExtensions());
         assertEquals(List.of("maven-bundle-plugin-4.2.1.jar"), imported(pom));
@@ -377,7 +381,7 @@ public class MavenTest {
 
     @Test
     public void buildExtensionAllowed() throws IOException, ProjectBuildingException {
-        Maven m = new Config().allowExtension("org.apache.felix:maven-bundle-plugin").build();
+        Maven m = newConfig().allowExtension("org.apache.felix:maven-bundle-plugin").build();
         MavenProject pom = m.loadPom(file("src/test/with-build-extension.pom"));
         assertEquals(1, pom.getModel().getBuild().getExtensions().size());
         assertEquals(List.of("maven-bundle-plugin-4.2.1.jar"), imported(pom));
