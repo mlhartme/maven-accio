@@ -16,7 +16,18 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-/** Blocks build- and plugin extensions from being loaded. It simply created an empty class realm for them. */
+/**
+ * Blocks build- and plugin extensions from being loaded. This is a security problem because the extension code is added
+ * to the classpath when loading the pom - it can override Maven components and thus inject code that's executed when
+ * Maven loads the respective component.
+ *
+ * Implementation: Maven adds extensions to the class loader via ClassRealmManager.createExtensionRealm(). ExtensionBlocker wraps
+ * this restrict class loading appropriately: it simply created an empty class realm for them.
+ *
+ * ExtensionBlocker can allow extensions by groupId+artifactId to be loaded, the version is intentionally not fixed.
+ * However, attackers could use this provide their own version and make it available by configuring a plugin repository.
+ * Use PomRepositoryBlocker is mitigate this.
+ */
 @Component(role = ClassRealmManager.class)
 public class ExtensionBlocker extends DefaultClassRealmManager {
     private final Logger logger;

@@ -7,30 +7,30 @@ Summon is kind of a stripped-down Maven for "read-only" functionality, it does n
 plugins or extensions, Technically, it uses the original Maven Libraries to resolve artifacts and load poms, 
 but omits the execution stuff.
 
+## Example
+
+Load a pom file like this:
+
+    ...
+
+    import org.apache.maven.project.MavenProject;
+    import net.oneandone.maven.summon.api.Maven;
+
+    ... 
+
+    Maven maven = Maven.create();
+    MavenProject pom = maven.loadPom("pom.xml");
+    System.out.println("artifactId: " + pom.getArtifactId();
+
+
 ## Security
 
-Caution, TODO: Maven [documentation](https://maven.apache.org/guides/mini/guide-multiple-repositories.html) 
-states that repositories in settings have precedence over pom repositories, but that's wrong: define a pom with 
+Loading a poms with Maven has two security problems that I am aware of:
+* extensions in a pom can inject code via extensions.
+* repositories defined in a pom can inject code by overriding Maven components
 
-      <repositories>
-        <repository>
-          <id>extra</id>
-          <url>https://some.other.central.repo/</url>
-        </repository>
-      </repositories>
-    
-and run "mvn help:effective-pom", you'll see that the built-in central repository is overwritten.
-
-Loading a poms with Maven has a security problem because poms can inject code via extensions.
-Loading poms with Summon is considered save because it does load extensions -
-neither core extensions, nor plugin extensions, nor build extensions.
-
-Technically, Maven adds extensions to the class loader via ClassRealmManager.createExtensionRealm(). Summon wraps 
-this with its ExtensionBlocker component to restrict class loading appropriately.
-
-ExtensionBlocker can allow extensions by groupId+artifactId to be loaded, the version is intenionally not fixed. 
-However, attackers could use this provide their own version and make it available by configuring a plugin repoistory. 
-Summon's PomRepositoryBlocker is used to block this.
+To mitigate this, Summon provides an ExtensionBlocker and a PomRepositoryBlocker. They can also be use
+separately as a core extension.
 
 Additionally, Maven instantiates extension Objects in [DefaulMaven.getLifecycleParticipants()](https://github.com/apache/maven/blob/21122926829f1ead511c958d89bd2f672198ae9f/maven-core/src/main/java/org/apache/maven/DefaultMaven.java#L327C5-L327C5).
 Summon does not run this code.

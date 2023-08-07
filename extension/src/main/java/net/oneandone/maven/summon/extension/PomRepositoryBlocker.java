@@ -14,11 +14,14 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Blocks repositories from actually being used for dependency or plugin resolution.
- * Note that they are not remove from the model, so help:effective-pom still shows them,
- * but the are skipped in the repository list actually use for resolving.
+ * Blocks defining repositories in poms. This is a security risk because attackers can inject code to be executed instead
+ * of e.g. clean:clean and they can inject code to replace Maven components.
+ *
+ * Technically, repositories are not removed from the model, so they still show up in help:effective-pom.
+ * Instead, repositories are removed from the repositories actually being used for dependency resolution.
+ *
  * Does not distinguish between normal and plugin repositories because they are usually not
- * distinguished when deploying and they share the same local repository, so it's likely possible
+ * distinguished when deploying, and they share the same local repository, so it's likely possible
  * to sneak plugin artifacts in by first resolving a normal artifact.
  * */
 @Component(role = ProjectBuildingHelper.class)
@@ -68,11 +71,14 @@ public class PomRepositoryBlocker extends DefaultProjectBuildingHelper {
     }
 
     /**
+     * Builds the repositories used to resolve dependencies
+     *
      * @param pomRepositories effective repositories in pom. CAUTION:
      *                        1) includes central, because that's in Maven's super pom
-     *                        2) includes merged-in profiles from settings, i.e. it contains all external erpositories
-     *                        3) repos with same id are merged, i.e. central can be overridden
+     *                        2) includes merged-in profiles from settings, i.e. it contains all external repositories
+     *                        3) repos with same id are merged, i.e. central from super pom might have a different url coming from settings.
      * @param externalRepositories repos from settings
+     * @param request configures merging in request.getRepositoryMerging (which maven sets to pom precedence)
      */
     @Override
     public List<ArtifactRepository> createArtifactRepositories(
@@ -86,8 +92,7 @@ public class PomRepositoryBlocker extends DefaultProjectBuildingHelper {
             if (containsUrl(externalRepositories, repo.getUrl())) {
                 filtered.add(repo);
                 logger().info(logPrefix + "external repository - ok: " + repo.getUrl());
-            }
-            if (allowUrls.contains(repo.getUrl())) {
+            } else if (allowUrls.contains(repo.getUrl())) {
                 filtered.add(repo);
                 logger().info(logPrefix + "pom repository allowed: " + repo.getUrl());
             } else {
