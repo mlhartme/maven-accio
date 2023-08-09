@@ -20,10 +20,10 @@ import java.util.List;
  * Technically, repositories are not removed from the model, so they still show up in help:effective-pom.
  * Instead, repositories are removed from the repositories actually being used for dependency resolution.
  *
- * Does not distinguish between normal and plugin repositories because they are usually not
+ * PomRepositoryBlocker not distinguish between normal and plugin repositories because they are usually not
  * distinguished when deploying, and they share the same local repository, so it's likely possible
  * to sneak plugin artifacts in by first resolving a normal artifact.
- * */
+ */
 @Component(role = ProjectBuildingHelper.class)
 public class PomRepositoryBlocker extends DefaultProjectBuildingHelper {
     private final String logPrefix;

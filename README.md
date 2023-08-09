@@ -4,8 +4,8 @@ Maven Summon is a library to resolve artifacts from Maven repositories and load 
 simple api for use in Java code, it does not include a command line interface.
 
 Summon is kind of a stripped-down Maven for "read-only" functionality, it does not execute any build phases, 
-plugins or extensions, Technically, it uses the original Maven Libraries to resolve artifacts and load poms, 
-but omits the execution stuff.
+plugins or extensions. Technically, it uses the original Maven Libraries to resolve artifacts and load poms, 
+but omits the execution (or actively blocks - see security below) stuff.
 
 ## Example
 
@@ -26,7 +26,7 @@ Load a pom file like this:
 ## Security
 
 Loading a poms with Maven has two security problems that I am aware of:
-* extensions in a pom can inject code via extensions.
+* extensions in a pom can inject arbitrary code
 * repositories defined in a pom can inject code by overriding Maven components
 
 To mitigate this, Summon provides an ExtensionBlocker and a PomRepositoryBlocker. They can also be use
@@ -39,15 +39,6 @@ There are other [extensions points](https://maven.apache.org/examples/maven-3-li
 * EventSpyDispatcher/EventSpy, used for plugin validation in Maven 3.9.3
 * ExecutionEventCatapult/ExecutionListener, used for console/log output
 but they do not load code like AbstractMavenLifecycleParticipant.
-
-## More class loading in Maven
-
-Maven manages class loading with Plexus ClassWorlds, new code is added via ClassRealms, and a ClassRealmManager controls all this. 
-This manager has methods to create project, plugin, and extension realms. ProjectRealm is a composite of the contained extension realms. 
-Plugin realms are used when invoking plugin. 
-
-When loading a pom, the project realm and thus all plugin realms are created, which enabled extensions to override components used
-by Maven and thus inject code. Summon provides a BlockingClassRealmManager to avoid this.
 
 ## Core extension
 

@@ -21,6 +21,14 @@ import java.util.List;
  * to the classpath when loading the pom - it can override Maven components and thus inject code that's executed when
  * Maven loads the respective component.
  *
+ * Context:
+ * Maven manages class loading with Plexus ClassWorlds, new code is added via ClassRealms, and a ClassRealmManager controls all this.
+ * ClassRealmManager has methods to create project, plugin, and extension realms. A project realm is a composite of the contained extension
+ * realms. Plugin realms are used when invoking plugin.
+ *
+ * When loading a pom, the project realm and thus all plugin realms are created, which enables extensions to override components used
+ * by Maven and thus inject code. BlockingClassRealmManager is meant to mitigate this.
+ *
  * Implementation: Maven adds extensions to the class loader via ClassRealmManager.createExtensionRealm(). ExtensionBlocker wraps
  * this restrict class loading appropriately: it simply created an empty class realm for them.
  *
