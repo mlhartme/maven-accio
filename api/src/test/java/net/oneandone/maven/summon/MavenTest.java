@@ -66,7 +66,7 @@ public class MavenTest {
     private static final Artifact WAR = new DefaultArtifact("wicket:wicket-quickstart:war:x");
     private static final Artifact NOT_FOUND = new DefaultArtifact("no.such.group:foo:x");
 
-    private static final String MAVEN_PARENT_VERSION_PREFIX = "1.6.2-";
+    private static final String MAVEN_PARENT_VERSION_PREFIX = "1.6.3-";
     private static final Artifact MAVEN_PARENT = new DefaultArtifact("de.schmizzolin.maven.poms:parent:pom:" +
             MAVEN_PARENT_VERSION_PREFIX + "SNAPSHOT");
 
