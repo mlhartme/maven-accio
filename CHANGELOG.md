@@ -7,29 +7,32 @@
   *  settings can define repositories outside of profiles
 
 
-### 4.0.0 (pending)
+### 4.0.0 (2023-08-11)
 
 * renamed to Maven Summon
-* extracted setup code into a Config class
-* removed groupName argument from deploy methods, because it uses compat code
-* Maven is AutoClosable now, close() invokes container.dispose() to fix memory leak
-* added PomRepositoryBlocker than can block normal or plugin repositories being added in poms; default is to block all
-* added ExtensionBlocker that can block extension classes/resources being loaded; default is to block all
-* Maven.loadPom 
-  * added support to load projects recursively
-  * removed dependencies out argument - use MavenProject.getArtifacts() instead
-  * fix: always resolve plugins (needed to build the proper effective pom)
-  * fix: properly pass plugin repositories to project building request
-  * now defaults to resolve dependencies and process plugins (previously, plugins were never processed)
-* hide internals: removed Maven method getRepositorySystem(), getRepositorySession(), remoteLegacyRepositories() and remoteResolveRepositories()
-* added tests for profile activation and effective pom building
-* dump sushi dependency, changed Api to work on files instead
-* dependency updates
-  * update Maven 3.3.9 libraries to 3.9.4
-  * update plexus-classworlds 2.5.2 to 2.7.0
-  * switch from Aether 1.0.2.xx to Maven Artifact Resolver 1.9.14 (https://maven.apache.org/resolver/)
-  * switch from MavenSettingsBuilder to SettingsBuilder (fixes deprecation)
-  * dump Wagon dependency, Maven itself has replaced it
+* turned into a multi-module build, the former content is now the api modules
+* added an extension module:
+  * added PomRepositoryBlocker than can block normal or plugin repositories being added in poms; default is to block all
+  * added ExtensionBlocker that can block extension classes/resources being loaded; default is to block all
+* api module changes
+  * extracted setup code into a Config class
+  * removed groupName argument from deploy methods, because it uses compat code
+  * Maven is AutoClosable now, close() invokes container.dispose() to fix memory leak
+  * Maven.loadPom 
+    * added support to load projects recursively
+    * removed dependencies out argument - use MavenProject.getArtifacts() instead
+    * fix: always resolve plugins (needed to build the proper effective pom)
+    * fix: properly pass plugin repositories to project building request
+    * now defaults to resolve dependencies and process plugins (previously, plugins were never processed)
+  * hide internals: removed Maven method getRepositorySystem(), getRepositorySession(), remoteLegacyRepositories() and remoteResolveRepositories()
+  * added tests for profile activation and effective pom building
+  * dump sushi dependency, changed Api to work on files instead
+  * dependency updates
+    * update Maven 3.3.9 libraries to 3.9.4
+    * update plexus-classworlds 2.5.2 to 2.7.0
+    * switch from Aether 1.0.2.xx to Maven Artifact Resolver 1.9.14 (https://maven.apache.org/resolver/)
+    * switch from MavenSettingsBuilder to SettingsBuilder (fixes deprecation)
+    * dump Wagon dependency, Maven itself has replaced it
 
 
 ### 3.13.0 (2022-12-19)
