@@ -4,12 +4,12 @@
   <parent>
     <groupId>net.oneandone.maven.summon</groupId>
     <artifactId>parent</artifactId>
-    <version>4.0.0</version>
+    <version>4.0.1-SNAPSHOT</version>
   </parent>
 
   <groupId>net.oneandone.maven.summon</groupId>
   <artifactId>extension</artifactId>
-  <version>4.0.0</version>
+  <version>4.0.1-SNAPSHOT</version>
   <packaging>jar</packaging>
   <description>A Maven extensions to close code execution vulnerabilities when loading poms.</description>
 
