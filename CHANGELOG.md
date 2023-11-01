@@ -10,6 +10,7 @@
 ### 4.0.1 (pending)
 
 * introduced Restriction classes to make "denyAll" configurable for Maven Config.
+* update parent
 
 
 ### 4.0.0 (2023-08-11)
