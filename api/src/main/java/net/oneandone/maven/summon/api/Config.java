@@ -17,6 +17,7 @@ package net.oneandone.maven.summon.api;
 
 import net.oneandone.maven.summon.extension.ExtensionBlocker;
 import net.oneandone.maven.summon.extension.PomRepositoryBlocker;
+import net.oneandone.maven.summon.extension.Restriction;
 import org.apache.maven.classrealm.ClassRealmManager;
 import org.apache.maven.project.DefaultProjectBuilder;
 import org.apache.maven.project.ProjectBuilder;
@@ -41,8 +42,6 @@ import org.eclipse.aether.transfer.TransferListener;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * Represents configuration with settings and local configuration.
@@ -52,8 +51,11 @@ public class Config {
     private File localRepository;
     private File globalSettings;
     private File userSettings;
-    private List<String> allowExtensions;
-    private List<String> allowPomRepositories;
+
+    /** group/artifact id */
+    private Restriction allowExtensions;
+    /** urls */
+    private Restriction allowPomRepositories;
     private TransferListener transferListener;
     private RepositoryListener repositoryListener;
 
@@ -61,8 +63,8 @@ public class Config {
         localRepository = null;
         globalSettings = null;
         userSettings = null;
-        allowExtensions = new ArrayList<>();
-        allowPomRepositories = new ArrayList<>();
+        allowExtensions = new Restriction();
+        allowPomRepositories = new Restriction();
         transferListener = null;
         repositoryListener = null;
     }
@@ -92,13 +94,12 @@ public class Config {
         return this;
     }
 
-    public Config allowExtension(String groupArtifact) {
-        allowExtensions.add(groupArtifact);
-        return this;
+    public Restriction allowExtensions() {
+        return allowExtensions;
     }
-    public Config allowPomRepository(String url) {
-        allowPomRepositories.add(url);
-        return this;
+
+    public Restriction allowPomRepositories() {
+        return allowPomRepositories;
     }
 
     public Maven build() throws IOException {
@@ -108,15 +109,9 @@ public class Config {
         try {
 
             ExtensionBlocker rm = (ExtensionBlocker) container.lookup(ClassRealmManager.class);
-            if (allowExtensions != null) {
-                rm.getAllowArtifacts().addAll(allowExtensions);
-            }
+            rm.allowGroupArtifacts().add(allowExtensions);
             PomRepositoryBlocker pm = (PomRepositoryBlocker) container.lookup(ProjectBuildingHelper.class);
-            if (allowPomRepositories != null) {
-                for (String url : allowPomRepositories) {
-                    pm.allow(url);
-                }
-            }
+            pm.allowUrls().add(allowPomRepositories);
             projectBuilder = (DefaultProjectBuilder) container.lookup(ProjectBuilder.class);
         } catch (ComponentLookupException e) {
             throw new IllegalStateException(e);

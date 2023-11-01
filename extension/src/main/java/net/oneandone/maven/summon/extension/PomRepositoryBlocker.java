@@ -42,26 +42,14 @@ import java.util.List;
 @Component(role = ProjectBuildingHelper.class)
 public class PomRepositoryBlocker extends DefaultProjectBuildingHelper {
     private final String logPrefix;
-    private List<String> allowUrls;
+    private Restriction allowUrls;
     public PomRepositoryBlocker() {
         this.logPrefix = getClass().getSimpleName() + ": ";
-        this.allowUrls = new ArrayList<>();
-        addAllowProperty();
+        this.allowUrls = new Restriction().allowProperty(getClass().getName() + ":allow");
     }
 
-    public void addAllowProperty() {
-        String property = System.getProperty(getClass().getName() + ":allow");
-        if (property != null) {
-            for (String entry : property.split(",")) {
-                if (!entry.isBlank()) {
-                    allowUrls.add(entry.trim());
-                }
-            }
-        }
-    }
-
-    public void allow(String url) {
-        allowUrls.add(url);
+    public Restriction allowUrls() {
+        return allowUrls;
     }
 
     // TODO: I'm unable to get the logger injected properly ...
@@ -107,7 +95,7 @@ public class PomRepositoryBlocker extends DefaultProjectBuildingHelper {
             if (containsUrl(externalRepositories, repo.getUrl())) {
                 filtered.add(repo);
                 logger().info(logPrefix + "external repository - ok: " + repo.getUrl());
-            } else if (allowUrls.contains(repo.getUrl())) {
+            } else if (allowUrls.isAllowed(repo.getUrl())) {
                 filtered.add(repo);
                 logger().info(logPrefix + "pom repository allowed: " + repo.getUrl());
             } else {

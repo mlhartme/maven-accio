@@ -27,7 +27,6 @@ import org.codehaus.plexus.logging.Logger;
 import org.eclipse.aether.artifact.Artifact;
 
 import javax.inject.Inject;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -54,43 +53,31 @@ import java.util.List;
 @Component(role = ClassRealmManager.class)
 public class ExtensionBlocker extends DefaultClassRealmManager {
     private final Logger logger;
-    private final List<String> allowGroupArtifacts;
+    private final Restriction allowGroupArtifacts;
     private final String logPrefix;
 
     @Inject
     public ExtensionBlocker(Logger logger, PlexusContainer container, List<ClassRealmManagerDelegate> delegates, CoreExports exports) {
         super(logger, container, delegates, exports);
         this.logger = logger;
-        this.allowGroupArtifacts = new ArrayList<>();
+        this.allowGroupArtifacts = new Restriction().allowProperty(getClass().getName() + ":allow");
         this.logPrefix = getClass().getSimpleName() + ": ";
-        addAllowProperty();
         logger.info(logPrefix + "created, allow " + allowGroupArtifacts);
     }
 
-    public void addAllowProperty() {
-        String property = System.getProperty(getClass().getName() + ":allow");
-        if (property != null) {
-            for (String entry : property.split(",")) {
-                if (!entry.isBlank()) {
-                    allowGroupArtifacts.add(entry.trim());
-                }
-            }
-        }
-    }
-
-    public List<String> getAllowArtifacts() {
+    public Restriction allowGroupArtifacts() {
         return allowGroupArtifacts;
     }
 
     @Override
     public ClassRealm createExtensionRealm(Plugin plugin, List<Artifact> artifacts) {
         String gav = plugin.getGroupId() + ":" + plugin.getArtifactId() + ":" + plugin.getVersion();
-        if (allowGroupArtifacts != null && !allowGroupArtifacts.contains(plugin.getGroupId() + ":" + plugin.getArtifactId())) {
-            logger.warn(logPrefix + "blocked extension " + gav);
-            return super.createExtensionRealm(plugin, Collections.emptyList());
-        } else {
+        if (allowGroupArtifacts.isAllowed(plugin.getGroupId() + ":" + plugin.getArtifactId())) {
             logger.info(logPrefix + "allowed extension " + gav);
             return super.createExtensionRealm(plugin, artifacts);
+        } else {
+            logger.warn(logPrefix + "blocked extension " + gav);
+            return super.createExtensionRealm(plugin, Collections.emptyList());
         }
     }
 }

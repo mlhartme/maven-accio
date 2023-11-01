@@ -66,7 +66,7 @@ public class MavenTest {
     private static final Artifact WAR = new DefaultArtifact("wicket:wicket-quickstart:war:x");
     private static final Artifact NOT_FOUND = new DefaultArtifact("no.such.group:foo:x");
 
-    private static final String MAVEN_PARENT_VERSION_PREFIX = "1.6.3-";
+    private static final String MAVEN_PARENT_VERSION_PREFIX = "1.6.4-";
     private static final Artifact MAVEN_PARENT = new DefaultArtifact("de.schmizzolin.maven.poms:parent:pom:" +
             MAVEN_PARENT_VERSION_PREFIX + "SNAPSHOT");
 
@@ -120,7 +120,9 @@ public class MavenTest {
         MavenProject pom = maven.loadPom(file);
         assertEquals(List.of(CENTRAL, SONATYPE), pom.getRemotePluginRepositories().stream().map(RemoteRepository::getUrl).toList());
 
-        pom = newConfig().allowPomRepository(extra).build().loadPom(file);
+        Config config = newConfig();
+        config.allowPomRepositories().allow(extra);
+        pom = config.build().loadPom(file);
         assertEquals(List.of(extra, CENTRAL, SONATYPE), pom.getRemotePluginRepositories().stream().map(RemoteRepository::getUrl).toList());
     }
 
@@ -366,7 +368,9 @@ public class MavenTest {
 
     @Test
     public void pluginExtensionAllowed() throws IOException, ProjectBuildingException {
-        Maven m = newConfig().allowExtension("org.apache.felix:maven-bundle-plugin").build();
+        Config config = newConfig();
+        config.allowExtensions().allow("org.apache.felix:maven-bundle-plugin");
+        Maven m = config.build();
         MavenProject pom = m.loadPom(file("src/test/with-plugin-extension.pom"));
         assertEquals("true", pom.getModel().getBuild().getPluginsAsMap().get("org.apache.felix:maven-bundle-plugin").getExtensions());
         assertEquals(List.of("maven-bundle-plugin-4.2.1.jar"), imported(pom));
@@ -381,7 +385,9 @@ public class MavenTest {
 
     @Test
     public void buildExtensionAllowed() throws IOException, ProjectBuildingException {
-        Maven m = newConfig().allowExtension("org.apache.felix:maven-bundle-plugin").build();
+        Config config = newConfig();
+        config.allowExtensions().allow("org.apache.felix:maven-bundle-plugin");
+        Maven m = config.build();
         MavenProject pom = m.loadPom(file("src/test/with-build-extension.pom"));
         assertEquals(1, pom.getModel().getBuild().getExtensions().size());
         assertEquals(List.of("maven-bundle-plugin-4.2.1.jar"), imported(pom));

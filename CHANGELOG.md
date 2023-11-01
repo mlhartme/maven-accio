@@ -7,6 +7,11 @@
   *  settings can define repositories outside of profiles
 
 
+### 4.0.1 (pending)
+
+* introduced Restriction classes to make "denyAll" configurable for Maven Config.
+
+
 ### 4.0.0 (2023-08-11)
 
 * renamed to Maven Summon
