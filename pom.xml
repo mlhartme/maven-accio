@@ -18,7 +18,7 @@
 
   <properties>
     <mavenVersion>3.9.5</mavenVersion>
-    <resolverVersion>1.9.14</resolverVersion>
+    <resolverVersion>1.9.17</resolverVersion>
   </properties>
 
   <developers>

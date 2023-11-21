@@ -2,7 +2,8 @@
 
 ### TODO
 
-* update maven dependencies from 3.9.4 to 3.9.5
+* update Maven dependencies from 3.9.4 to 3.9.5
+* update Maven resolver 1.9.14 to 1.9.17
 * dump compat dependency when Maven's (Dwfault)ProjectBuilderRequest removed ArtifactRepository from it's ProjectBuilderingRequest.
 * support for Maven 4
   *  settings can define repositories outside of profiles
