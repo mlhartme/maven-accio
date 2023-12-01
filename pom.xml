@@ -17,7 +17,7 @@
   <version>4.0.1-SNAPSHOT</version>
 
   <properties>
-    <mavenVersion>3.9.5</mavenVersion>
+    <mavenVersion>3.9.6</mavenVersion>
     <resolverVersion>1.9.18</resolverVersion>
   </properties>
 
